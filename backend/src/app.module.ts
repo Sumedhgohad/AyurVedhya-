@@ -9,11 +9,14 @@ import { AuditModule } from './modules/audit/audit.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { SafetyModule } from './modules/safety/safety.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { AiAnalyticsModule } from './modules/ai-analytics/ai.module';
+import { InteropModule } from './modules/interop/interop.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../.env' }),
-    ScheduleModule.forRoot(), // Enables background cron rule evaluation
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot(studyDatabaseConfig),
     TypeOrmModule.forRoot(clinicalDatabaseConfig),
     TypeOrmModule.forRoot(auditDatabaseConfig),
@@ -23,6 +26,9 @@ import { AlertsModule } from './modules/alerts/alerts.module';
     AuditModule,
     SafetyModule,
     AlertsModule,
+    DocumentsModule,
+    AiAnalyticsModule,
+    InteropModule,
   ],
 })
 export class AppModule {}

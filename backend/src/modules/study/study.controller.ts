@@ -26,9 +26,9 @@ export class StudyController {
     return this.studyService.submitToIec(id, dto);
   }
 
-  @Patch('iec-decision/:submissionId')
-  recordIecDecision(@Param('submissionId') submissionId: string, @Body() dto: DecideIecDto) {
-    return this.studyService.recordIecDecision(submissionId, dto);
+  @Patch(':id/iec-decide')
+  recordIecDecision(@Param('id') id: string, @Body() dto: DecideIecDto) {
+    return this.studyService.recordIecDecision(id, dto);
   }
 
   @Patch(':id/ctri-link')

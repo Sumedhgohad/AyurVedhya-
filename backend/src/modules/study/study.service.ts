@@ -1,16 +1,19 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Study, StudyStatus, StudyIpBatch, IecSubmission, IecDecisionStatus, CtriRegistration } from './entities';
+import { Study, StudyStatus } from './entities/study.entity';
+import { StudyIpBatch } from './entities/study-ip-batch.entity';
+import { IecSubmission, IecDecisionStatus } from './entities/iec-submission.entity';
+import { CtriRegistration } from './entities/ctri-registration.entity';
 import { CreateStudyDto, SubmitIecDto, DecideIecDto, LinkCtriDto, CreateIpBatchDto } from './dto/study.dto';
 
 @Injectable()
 export class StudyService {
   constructor(
-    @InjectRepository(Study) private studyRepo: Repository<Study>,
-    @InjectRepository(StudyIpBatch) private ipRepo: Repository<StudyIpBatch>,
-    @InjectRepository(IecSubmission) private iecRepo: Repository<IecSubmission>,
-    @InjectRepository(CtriRegistration) private ctriRepo: Repository<CtriRegistration>,
+    @InjectRepository(Study, 'studyConnection') private studyRepo: Repository<Study>,
+    @InjectRepository(StudyIpBatch, 'studyConnection') private ipRepo: Repository<StudyIpBatch>,
+    @InjectRepository(IecSubmission, 'studyConnection') private iecRepo: Repository<IecSubmission>,
+    @InjectRepository(CtriRegistration, 'studyConnection') private ctriRepo: Repository<CtriRegistration>,
   ) {}
 
   async createStudy(dto: CreateStudyDto): Promise<Study> {
@@ -36,22 +39,33 @@ export class StudyService {
 
   async submitToIec(studyId: string, dto: SubmitIecDto): Promise<IecSubmission> {
     const study = await this.getStudyById(studyId);
-    if (study.status !== StudyStatus.DRAFT) {
+    if (study.status !== StudyStatus.DRAFT && study.status !== StudyStatus.IEC_SUBMITTED) {
       throw new BadRequestException(`Only DRAFT studies can be submitted to IEC.`);
     }
 
     const submission = this.iecRepo.create({ ...dto, study });
     const saved = await this.iecRepo.save(submission);
 
-    study.status = StudyStatus.IEC_SUBMITTED;
-    await this.studyRepo.save(study);
-
+    await this.studyRepo.update(studyId, { status: StudyStatus.IEC_SUBMITTED });
     return saved;
   }
 
-  async recordIecDecision(submissionId: string, dto: DecideIecDto): Promise<IecSubmission> {
-    const sub = await this.iecRepo.findOne({ where: { id: submissionId }, relations: ['study'] });
-    if (!sub) throw new NotFoundException(`IEC Submission not found.`);
+  async recordIecDecision(studyId: string, dto: DecideIecDto): Promise<IecSubmission> {
+    const study = await this.getStudyById(studyId);
+    
+    // Find the latest submission for this study
+    let sub = await this.iecRepo.findOne({
+      where: { study: { id: studyId } },
+      order: { created_at: 'DESC' },
+    });
+
+    if (!sub) {
+      // Auto-create submission if not yet created
+      sub = this.iecRepo.create({
+        study,
+        submission_date: dto.decision_date,
+      });
+    }
 
     sub.decision = dto.decision;
     sub.decision_date = dto.decision_date;
@@ -60,9 +74,11 @@ export class StudyService {
 
     const saved = await this.iecRepo.save(sub);
 
+    // Update study status
     if (dto.decision === IecDecisionStatus.APPROVED) {
-      sub.study.status = StudyStatus.IEC_APPROVED;
-      await this.studyRepo.save(sub.study);
+      // If CTRI is already registered, unlock ENROLLING directly!
+      const newStatus = study.ctri_registration ? StudyStatus.ENROLLING : StudyStatus.IEC_APPROVED;
+      await this.studyRepo.update(studyId, { status: newStatus });
     }
 
     return saved;
@@ -71,29 +87,32 @@ export class StudyService {
   async linkCtri(studyId: string, dto: LinkCtriDto): Promise<CtriRegistration> {
     const study = await this.getStudyById(studyId);
 
-    // Guard: Must have approved IEC before CTRI link
-    if (study.status !== StudyStatus.IEC_APPROVED && study.status !== StudyStatus.IEC_SUBMITTED) {
-      throw new BadRequestException(`Cannot link CTRI without active IEC submission/approval.`);
-    }
-
     // Calculate next 6-month statutory update deadline
     const regDate = new Date(dto.registration_date);
     const sixMonthsLater = new Date(regDate.setMonth(regDate.getMonth() + 6)).toISOString().split('T')[0];
 
-    const ctri = this.ctriRepo.create({
-      study,
-      ctri_id: dto.ctri_id,
-      registration_date: dto.registration_date,
-      last_updated_date: dto.registration_date,
-      next_mandatory_update_due: sixMonthsLater,
-    });
+    let ctri = await this.ctriRepo.findOne({ where: { study: { id: studyId } } });
+    if (ctri) {
+      ctri.ctri_id = dto.ctri_id;
+      ctri.registration_date = dto.registration_date;
+      ctri.last_updated_date = dto.registration_date;
+      ctri.next_mandatory_update_due = sixMonthsLater;
+    } else {
+      ctri = this.ctriRepo.create({
+        study,
+        ctri_id: dto.ctri_id,
+        registration_date: dto.registration_date,
+        last_updated_date: dto.registration_date,
+        next_mandatory_update_due: sixMonthsLater,
+      });
+    }
 
     const savedCtri = await this.ctriRepo.save(ctri);
 
-    // Guarded State Transition: If IEC is approved + CTRI linked -> Unlock ENROLLING
-    if (study.status === StudyStatus.IEC_APPROVED) {
-      study.status = StudyStatus.ENROLLING;
-      await this.studyRepo.save(study);
+    // State Transition: If IEC is approved -> Unlock ENROLLING
+    const hasApprovedIec = study.iec_submissions?.some((s) => s.decision === IecDecisionStatus.APPROVED);
+    if (hasApprovedIec || study.status === StudyStatus.IEC_APPROVED) {
+      await this.studyRepo.update(studyId, { status: StudyStatus.ENROLLING });
     }
 
     return savedCtri;

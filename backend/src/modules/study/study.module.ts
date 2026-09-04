@@ -5,7 +5,7 @@ import { StudyService } from './study.service';
 import { StudyController } from './study.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Study, StudyIpBatch, IecSubmission, CtriRegistration])],
+  imports: [TypeOrmModule.forFeature([Study, StudyIpBatch, IecSubmission, CtriRegistration], 'studyConnection')],
   controllers: [StudyController],
   providers: [StudyService],
   exports: [StudyService],

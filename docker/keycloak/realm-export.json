@@ -1,0 +1,110 @@
+{
+  "realm": "aiia-ctms",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_INVESTIGATOR",
+        "description": "Principal Investigator & Study Team - Clinical Execution"
+      },
+      {
+        "name": "ROLE_COMPLIANCE_OFFICER",
+        "description": "Ethics (IEC), CTRI Coordinator & Pharmacovigilance Officer"
+      },
+      {
+        "name": "ROLE_LEADERSHIP",
+        "description": "AIIA Institute Director & Leadership"
+      },
+      {
+        "name": "ROLE_DATA_MANAGER",
+        "description": "Biostatistician & CDISC/FHIR Data Exporter"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "aiia-web-client",
+      "name": "AIIA Web Dashboard Client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:5173",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "+"
+      ]
+    },
+    {
+      "clientId": "aiia-backend-api",
+      "name": "AIIA Backend Microservices API",
+      "enabled": true,
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "investigator@aiia.gov.in",
+      "email": "investigator@aiia.gov.in",
+      "firstName": "Dr. Rajesh",
+      "lastName": "Sharma (PI)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Pass@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_INVESTIGATOR"
+      ]
+    },
+    {
+      "username": "compliance@aiia.gov.in",
+      "email": "compliance@aiia.gov.in",
+      "firstName": "Dr. Ananya",
+      "lastName": "Verma (Safety & Ethics)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Pass@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_COMPLIANCE_OFFICER",
+        "ROLE_DATA_MANAGER"
+      ]
+    },
+    {
+      "username": "director@aiia.gov.in",
+      "email": "director@aiia.gov.in",
+      "firstName": "Prof.",
+      "lastName": "Director (AIIA Leadership)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Pass@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_LEADERSHIP"
+      ]
+    }
+  ]
+}

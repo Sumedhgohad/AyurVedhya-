@@ -9,6 +9,6 @@ import { SafetyGateway } from './safety.gateway';
   imports: [TypeOrmModule.forFeature([AdverseEvent], 'clinicalConnection')],
   controllers: [SafetyController],
   providers: [SafetyService, SafetyGateway],
-  exports: [SafetyService],
+  exports: [SafetyService, SafetyGateway],
 })
 export class SafetyModule {}

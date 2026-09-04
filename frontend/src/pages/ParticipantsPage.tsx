@@ -64,7 +64,7 @@ export const ParticipantsPage: React.FC = () => {
         dispensed_batch_no: 'ASH-2026-B1',
         quantity_dispensed: 60,
       });
-      setNotification({ msg: `✓ ${pRes.data.participant_code} successfully enrolled — Baseline Hybrid CRF locked.`, ok: true });
+      setNotification({ msg: `${pRes.data.participant_code} successfully enrolled — Baseline Hybrid CRF locked.`, ok: true });
       setEnrolledList((prev) => [
         { code: pRes.data.participant_code, age, gender, prakriti, dietScore, date: new Date().toLocaleDateString() },
         ...prev,
@@ -286,7 +286,7 @@ export const ParticipantsPage: React.FC = () => {
                       {pt.dietScore}%
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 12, color: T.dim }}>
-                      ✓ CRF Verified
+                      CRF Verified
                     </td>
                   </tr>
                 ))}

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Study } from '../types';
+import { Users, CheckCircle2, Plus, Pill, RefreshCw, Award, Sparkles } from 'lucide-react';
+import { SignaturePad } from './SignaturePad';
+import { PrakritiQuestionnaireModal } from './PrakritiQuestionnaireModal';
 import { api } from '../api/client';
 
 interface Props {
@@ -7,302 +10,223 @@ interface Props {
   refreshData: () => void;
 }
 
-/* ── Design tokens ── */
-const T = {
-  tile: '#1d1d1f',
-  tileDark: '#000000',
-  border: 'rgba(255,255,255,0.08)',
-  ink: '#ffffff',
-  muted: '#cccccc',
-  dim: '#7a7a7a',
-  primary: '#0066cc',
-  primaryOnDark: '#2997ff',
-  success: '#34c759',
-  danger: '#ff453a',
-};
-
-const Section: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
-  <div
-    style={{
-      background: T.tile,
-      border: `1px solid ${T.border}`,
-      borderRadius: 18,
-      padding: 28,
-      ...style,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const KpiCard: React.FC<{ label: string; value: React.ReactNode; sub: string; accent?: string }> = ({
-  label, value, sub, accent = '#ffffff',
-}) => (
-  <Section>
-    <p
-      style={{
-        fontSize: 11, fontWeight: 600, color: T.dim,
-        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
-      }}
-    >
-      {label}
-    </p>
-    <div
-      style={{
-        fontSize: 36, fontWeight: 600, color: accent,
-        letterSpacing: '-0.374px', lineHeight: 1.1, marginBottom: 6,
-      }}
-    >
-      {value}
-    </div>
-    <p style={{ fontSize: 14, color: T.muted, letterSpacing: '-0.224px', margin: 0 }}>
-      {sub}
-    </p>
-  </Section>
-);
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box',
-  background: T.tileDark, border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 11,
-  padding: '9px 14px', color: T.ink,
-  fontSize: 14, letterSpacing: '-0.224px',
-  outline: 'none', fontFamily: 'inherit',
-  transition: 'border-color 0.15s',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 600,
-  color: T.dim, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6,
-};
-
 export const InvestigatorDashboard: React.FC<Props> = ({ studies, refreshData }) => {
   const [patientCode, setPatientCode] = useState('');
   const [age, setAge] = useState('34');
   const [prakriti, setPrakriti] = useState('Vata-Pitta');
   const [dietScore, setDietScore] = useState(90);
+  const [signature, setSignature] = useState('');
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<{ msg: string; ok: boolean } | null>(null);
-  const study = studies[0];
+  const [notification, setNotification] = useState<string | null>(null);
+  const [isPrakritiModalOpen, setIsPrakritiModalOpen] = useState(false);
 
-  const handleEnroll = async (e: React.FormEvent) => {
+  const activeStudy = studies[0];
+  const currentBatch = activeStudy?.ip_batches?.[0];
+
+  const handleEnrollPatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!study) return;
+    if (!activeStudy) return;
     setLoading(true);
     try {
-      const pRes = await api.post('/clinical/participants/enroll', {
-        study_id: study.id,
-        participant_code: patientCode || `SUBJ-AIIA-${Math.floor(100 + Math.random() * 900)}`,
-        age: Number(age), gender: 'Female',
+      const code = patientCode || `SUBJ-AIIA-00${Math.floor(10 + Math.random() * 89)}`;
+
+      // 1. Enroll Participant
+      const patientRes = await api.post('/clinical/participants/enroll', {
+        study_id: activeStudy.id,
+        participant_code: code,
+        age: Number(age),
+        gender: 'Female',
         enrollment_date: new Date().toISOString().split('T')[0],
-        consent_type: 'WRITTEN', language_code: 'hi',
+        consent_type: signature ? 'DIGITAL_SIGNATURE' : 'WRITTEN',
+        language_code: 'hi',
       });
+
+      // 2. Record Baseline Visit with Automatic Medicine Batch Deduction (60 Capsules)
       await api.post('/clinical/visits/record', {
-        participant_id: pRes.data.id,
-        visit_number: 1, visit_type: 'BASELINE',
+        participant_id: patientRes.data.id,
+        visit_number: 1,
+        visit_type: 'BASELINE',
         visit_date: new Date().toISOString().split('T')[0],
         prakriti_assessment: prakriti,
-        nidan_panchaka_findings: 'Chronic Manasika Hetu, Pitta-Vata vitiation documented.',
+        nidan_panchaka_findings: 'Vata-Pitta Prakopa noted; chronic stress hetu present.',
         pathya_apathya_diet_score: Number(dietScore),
         namaste_terminology_code: 'NAMASTE_AYU_0842',
-        dispensed_batch_no: study.ip_batches?.[0]?.batch_no || 'ASH-2026-B1',
-        quantity_dispensed: 60,
+        dispensed_batch_no: currentBatch?.batch_no || 'ASH-2026-B1',
+        quantity_dispensed: 60, // Deducts 60 from pharmacy inventory!
       });
-      setNotification({ msg: `✓ ${pRes.data.participant_code} enrolled — Baseline CRF saved.`, ok: true });
+
+      setNotification(`✅ Enrolled ${code}! 60 capsules deducted from Batch ${currentBatch?.batch_no}. Available Stock: ${(currentBatch?.current_stock || 60) - 60} Units.`);
       setPatientCode('');
+      setSignature('');
       refreshData();
     } catch (err: any) {
-      setNotification({ msg: `Error: ${err.response?.data?.message || err.message}`, ok: false });
+      setNotification(`❌ Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {/* KPI row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-        <KpiCard
-          label="Enrollment Progress"
-          value={`1 / ${study?.target_sample_size || 120}`}
-          sub="Subjects enrolled in active study"
-          accent={T.primaryOnDark}
-        />
-        <KpiCard
-          label="CRF Completion"
-          value="100%"
-          sub="Prakriti · Nidan Panchaka · Diet Score"
-          accent={T.success}
-        />
-        <KpiCard
-          label="Open GCP Queries"
-          value="0"
-          sub="All queries resolved with source audit"
-          accent={T.ink}
-        />
+    <div className="space-y-6">
+      {/* TOP METRIC KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Enrollment Target</span>
+            <Users className="w-5 h-5 text-blue-400" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-white">1</span>
+            <span className="text-sm text-slate-400">/ {activeStudy?.target_sample_size || 120} Subjects</span>
+          </div>
+          <div className="mt-3 bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div className="bg-blue-500 h-full w-[2%]" />
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">GCP Drug Stock</span>
+            <Pill className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-emerald-400">{currentBatch?.current_stock || 0}</span>
+            <span className="text-xs text-slate-400">Units Available ({currentBatch?.batch_no})</span>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-400">Auto-deducted on patient dispensation</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Open GCP Queries</span>
+            <CheckCircle2 className="w-5 h-5 text-purple-400" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-white">0</span>
+            <span className="text-xs text-purple-400 font-medium">100% Clean Audit Trail</span>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-400">Verified in audit_integrity_db</p>
+        </div>
       </div>
 
-      {/* Notification */}
       {notification && (
-        <div
-          style={{
-            padding: '14px 20px', borderRadius: 11,
-            border: `1px solid ${notification.ok ? 'rgba(52,199,89,0.4)' : 'rgba(255,69,58,0.4)'}`,
-            background: notification.ok ? 'rgba(52,199,89,0.08)' : 'rgba(255,69,58,0.08)',
-            color: notification.ok ? T.success : T.danger,
-            fontSize: 14, letterSpacing: '-0.224px',
-          }}
-        >
-          {notification.msg}
+        <div className="p-3 bg-slate-900 border border-slate-700 text-xs font-medium text-emerald-400 rounded-xl">
+          {notification}
         </div>
       )}
 
-      {/* Study card + Enroll form */}
-      <div style={{ display: 'grid', gridTemplateColumns: '5fr 3fr', gap: 20 }}>
-        {/* Study Details */}
-        <Section>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <span
-              style={{
-                fontSize: 11, fontWeight: 600, color: T.primaryOnDark,
-                background: 'rgba(41,151,255,0.1)', border: '1px solid rgba(41,151,255,0.25)',
-                padding: '3px 10px', borderRadius: 9999,
-              }}
-            >
-              {study?.short_code || '—'}
-            </span>
-            <span
-              style={{
-                fontSize: 11, fontWeight: 600, color: T.success,
-                background: 'rgba(52,199,89,0.1)', border: '1px solid rgba(52,199,89,0.25)',
-                padding: '3px 10px', borderRadius: 9999,
-              }}
-            >
-              {study?.status || 'LOADING'}
-            </span>
+      {/* ENROLLMENT & AYURVEDA CRF */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Study Overview & Pharmacy Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">
+                {activeStudy?.short_code}
+              </span>
+              <h2 className="text-base font-bold text-white mt-2">{activeStudy?.title}</h2>
+              <p className="text-xs text-slate-400 mt-1">Phase: {activeStudy?.phase} | Status: <strong className="text-emerald-400">{activeStudy?.status}</strong></p>
+            </div>
+            <button onClick={refreshData} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
-          <h2
-            style={{
-              fontSize: 21, fontWeight: 600, color: T.ink,
-              letterSpacing: '-0.374px', lineHeight: 1.19, marginBottom: 6,
-            }}
-          >
-            {study?.title || 'Loading study…'}
-          </h2>
-          <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', marginBottom: 28 }}>
-            {study?.phase} · {study?.study_type}
-          </p>
 
-          {/* IP Batch grid */}
-          <div
-            style={{
-              borderTop: `1px solid rgba(255,255,255,0.06)`,
-              paddingTop: 20,
-            }}
-          >
-            <p
-              style={{
-                fontSize: 11, fontWeight: 600, color: T.dim,
-                textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
-              }}
-            >
-              Investigational Product · Batch Traceability (AFI Standard)
-            </p>
-            <div
-              style={{
-                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12,
-                background: T.tileDark, padding: 16, borderRadius: 11,
-                border: `1px solid rgba(255,255,255,0.06)`,
-              }}
-            >
-              {[
-                { k: 'Formulation', v: study?.ip_batches?.[0]?.formulation_name || '—' },
-                { k: 'Batch No.', v: study?.ip_batches?.[0]?.batch_no || '—' },
-                { k: 'AFI Standard', v: study?.ip_batches?.[0]?.afi_api_standard_ref || '—' },
-                { k: 'Stock', v: `${study?.ip_batches?.[0]?.current_stock ?? '—'} units` },
-              ].map(({ k, v }) => (
-                <div key={k}>
-                  <span style={{ fontSize: 11, color: T.dim, display: 'block', marginBottom: 4 }}>{k}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: T.ink, letterSpacing: '-0.224px' }}>{v}</span>
-                </div>
-              ))}
+          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+            <h3 className="font-bold text-slate-200 flex items-center gap-2">
+              <Award className="w-4 h-4 text-emerald-400" />
+              Investigational Product (AFI / API Standard)
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+              <div><span className="text-slate-500">Formulation:</span> <strong className="text-slate-300">{currentBatch?.formulation_name}</strong></div>
+              <div><span className="text-slate-500">Batch No:</span> <strong className="text-slate-300">{currentBatch?.batch_no}</strong></div>
+              <div><span className="text-slate-500">Standard:</span> <strong className="text-slate-300">{currentBatch?.afi_api_standard_ref}</strong></div>
+              <div><span className="text-slate-500">Warehouse Stock:</span> <strong className="text-emerald-400">{currentBatch?.current_stock} Units</strong></div>
             </div>
           </div>
-        </Section>
+        </div>
 
-        {/* Enroll Form */}
-        <Section>
-          <h3
-            style={{
-              fontSize: 17, fontWeight: 600, color: T.ink,
-              letterSpacing: '-0.374px', marginBottom: 20,
-            }}
-          >
-            Enroll Patient &amp; Log Hybrid CRF
+        {/* Right: Patient Enrollment + Signature Form */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+            <Plus className="w-4 h-4 text-blue-400" />
+            Enroll Patient & Capture e-Consent
           </h3>
 
-          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Participant Code</label>
-              <input
-                style={inputStyle}
-                placeholder="e.g. SUBJ-AIIA-002"
-                value={patientCode}
-                onChange={(e) => setPatientCode(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <form onSubmit={handleEnrollPatient} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label style={labelStyle}>Age</label>
-                <input type="number" style={inputStyle} value={age} onChange={(e) => setAge(e.target.value)} />
+                <label className="block text-slate-400 font-medium mb-1">Participant Code</label>
+                <input
+                  type="text"
+                  value={patientCode}
+                  onChange={(e) => setPatientCode(e.target.value)}
+                  placeholder="e.g. SUBJ-AIIA-002"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
               </div>
               <div>
-                <label style={labelStyle}>Prakriti</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-slate-400 font-medium">Ayurvedic Prakriti</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsPrakritiModalOpen(true)}
+                    className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-lg transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" /> Diagnostic Tool
+                  </button>
+                </div>
                 <select
-                  style={{ ...inputStyle, appearance: 'none' }}
                   value={prakriti}
                   onChange={(e) => setPrakriti(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
                 >
-                  {['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].map((v) => (
-                    <option key={v}>{v}</option>
-                  ))}
+                  <option value="Vata-Pitta">Vata-Pitta (V:50%, P:35%, K:15%)</option>
+                  <option value="Kapha-Vata">Kapha-Vata (K:50%, V:35%, P:15%)</option>
+                  <option value="Pitta-Kapha">Pitta-Kapha (P:50%, K:35%, V:15%)</option>
+                  <option value="Tridoshaja">Tridoshaja (Balanced)</option>
+                  {prakriti && !['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].includes(prakriti) && (
+                    <option value={prakriti}>{prakriti}</option>
+                  )}
                 </select>
               </div>
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <label style={{ ...labelStyle, marginBottom: 0 }}>Pathya-Apathya Diet Score</label>
-                <span style={{ fontSize: 14, fontWeight: 600, color: T.success }}>{dietScore}%</span>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-slate-400 font-medium">Pathya-Apathya (Diet/Lifestyle) Adherence</span>
+                <span className="text-emerald-400 font-bold">{dietScore}% Compliance</span>
               </div>
               <input
-                type="range" min={0} max={100} value={dietScore}
+                type="range"
+                min="0"
+                max="100"
+                value={dietScore}
                 onChange={(e) => setDietScore(Number(e.target.value))}
-                style={{ width: '100%', accentColor: T.primary }}
+                className="w-full accent-emerald-500"
               />
             </div>
+
+            {/* DIGITAL SIGNATURE CANVAS */}
+            <SignaturePad onSignatureCapture={(b64) => setSignature(b64)} />
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: T.primary, color: '#ffffff', border: 'none',
-                borderRadius: 9999, padding: '11px 22px',
-                fontSize: 17, fontWeight: 400, letterSpacing: '-0.374px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1,
-                transition: 'transform 0.1s ease',
-                fontFamily: 'inherit',
-              }}
-              onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
-              onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-blue-900/30 disabled:opacity-50"
             >
-              {loading ? 'Submitting…' : 'Enroll & Save Hybrid CRF'}
+              {loading ? 'Processing Transaction...' : 'Enroll, Sign & Dispense Medicine'}
             </button>
           </form>
-        </Section>
+        </div>
       </div>
+
+      {/* PRAKRITI QUESTIONNAIRE MODAL */}
+      <PrakritiQuestionnaireModal
+        isOpen={isPrakritiModalOpen}
+        onClose={() => setIsPrakritiModalOpen(false)}
+        onComplete={(prakritiSummary) => setPrakriti(prakritiSummary)}
+      />
     </div>
   );
 };

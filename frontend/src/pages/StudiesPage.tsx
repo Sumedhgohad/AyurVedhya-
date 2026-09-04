@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { Study } from '../types';
-import { Package } from 'lucide-react';
+import { Package, CheckCircle2 } from 'lucide-react';
 
 const T = {
   tile: '#1d1d1f',
@@ -244,9 +244,10 @@ export const StudiesPage: React.FC = () => {
                     IEC Approval Clearance
                   </span>
                   <span
-                    style={{ fontSize: 14, fontWeight: 600, color: T.success, letterSpacing: '-0.224px' }}
+                    style={{ fontSize: 14, fontWeight: 600, color: T.success, letterSpacing: '-0.224px', display: 'flex', alignItems: 'center', gap: 5 }}
                   >
-                    ✓ Valid Clearance Letter On File
+                    <CheckCircle2 size={13} />
+                    Valid Clearance Letter On File
                   </span>
                   <span
                     style={{

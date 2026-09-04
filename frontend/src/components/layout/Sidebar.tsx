@@ -37,7 +37,6 @@ const navItems = [
     icon: ShieldAlert,
     roles: ['ROLE_INVESTIGATOR', 'ROLE_COMPLIANCE_OFFICER', 'ROLE_LEADERSHIP'],
     badge: 'NDCT 24h',
-    badgeDanger: true,
   },
   {
     label: 'Ethics (IEC) & CTRI',
@@ -84,6 +83,8 @@ export const Sidebar: React.FC = () => {
         justifyContent: 'space-between',
         padding: '20px 12px',
         flexShrink: 0,
+        fontFamily:
+          "'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <div>
@@ -97,6 +98,7 @@ export const Sidebar: React.FC = () => {
             letterSpacing: '0.08em',
             padding: '0 10px',
             marginBottom: 12,
+            margin: '0 0 12px',
           }}
         >
           Navigation
@@ -154,7 +156,6 @@ export const Sidebar: React.FC = () => {
                     borderRadius: 9999,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite',
                     flexShrink: 0,
                   }}
                 >
@@ -190,7 +191,6 @@ export const Sidebar: React.FC = () => {
               borderRadius: '50%',
               background: '#34c759',
               display: 'inline-block',
-              boxShadow: '0 0 0 2px rgba(52,199,89,0.25)',
             }}
           />
           <span

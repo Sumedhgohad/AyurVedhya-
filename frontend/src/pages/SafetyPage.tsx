@@ -80,13 +80,13 @@ export const SafetyPage: React.FC = () => {
         action_taken: actionTaken || 'Investigational medicine withheld; participant placed on clinical monitoring.',
         outcome: 'Under Observation in AIIA Clinical Ward',
       });
-      setNotification('✅ Adverse Event logged. If serious, 24-hour statutory countdown clock is now live.');
+      setNotification('Adverse Event logged. If serious, 24-hour statutory countdown clock is now live.');
       setEventTerm('');
       setActionTaken('');
       setShowLogForm(false);
       loadSafetyData();
     } catch (err: any) {
-      setNotification(`❌ Error: ${err.response?.data?.message || err.message}`);
+      setNotification(`Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -324,7 +324,7 @@ export const SafetyPage: React.FC = () => {
                 <div
                   style={{
                     position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                    background: 'linear-gradient(90deg, #ff453a, #ff9f0a)',
+                    background: '#ff453a',
                   }}
                 />
 
@@ -338,6 +338,7 @@ export const SafetyPage: React.FC = () => {
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                       <span
                         style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
                           fontSize: 10, fontWeight: 700, color: T.danger,
                           background: 'rgba(255,69,58,0.12)',
                           border: '1px solid rgba(255,69,58,0.4)',
@@ -345,7 +346,8 @@ export const SafetyPage: React.FC = () => {
                           letterSpacing: '0.06em', textTransform: 'uppercase',
                         }}
                       >
-                        🚨 24H Statutory Clock Active
+                        <AlertTriangle size={10} style={{ flexShrink: 0 }} />
+                        24H Statutory Clock Active
                       </span>
                       <span style={{ fontSize: 12, color: T.dim, fontFamily: 'inherit' }}>
                         Participant:{' '}

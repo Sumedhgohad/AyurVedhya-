@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Study, SaeClock } from '../types';
 import { api } from '../api/client';
-import { CheckCircle2, Download } from 'lucide-react';
+import { CheckCircle2, Download, AlertTriangle } from 'lucide-react';
 
 interface Props {
   studies: Study[];
@@ -25,23 +25,13 @@ const T = {
   danger: '#ff453a',
 };
 
-const Section: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
-  <div
-    style={{
-      background: T.tile,
-      border: `1px solid ${T.border}`,
-      borderRadius: 18,
-      padding: 28,
-      ...style,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const KpiCard: React.FC<{ label: string; value: React.ReactNode; sub: string; accent?: string; borderColor?: string }> = ({
-  label, value, sub, accent = T.ink, borderColor = T.border,
-}) => (
+const KpiCard: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  sub: string;
+  accent?: string;
+  borderColor?: string;
+}> = ({ label, value, sub, accent = T.ink, borderColor = T.border }) => (
   <div
     style={{
       background: T.tile,
@@ -52,16 +42,25 @@ const KpiCard: React.FC<{ label: string; value: React.ReactNode; sub: string; ac
   >
     <p
       style={{
-        fontSize: 11, fontWeight: 600, color: T.dim,
-        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
+        fontSize: 11,
+        fontWeight: 600,
+        color: T.dim,
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        marginBottom: 14,
+        margin: '0 0 14px',
       }}
     >
       {label}
     </p>
     <div
       style={{
-        fontSize: 36, fontWeight: 600, color: accent,
-        letterSpacing: '-0.374px', lineHeight: 1.1, marginBottom: 6,
+        fontSize: 36,
+        fontWeight: 600,
+        color: accent,
+        letterSpacing: '-0.374px',
+        lineHeight: 1.1,
+        marginBottom: 6,
       }}
     >
       {value}
@@ -98,10 +97,10 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
         <KpiCard
           label="24h SAE Adherence"
-          value={saeClocks.length > 0 ? `${saeClocks.length} Active` : '✓ Clear'}
+          value={saeClocks.length > 0 ? `${saeClocks.length} Active` : 'Clear'}
           sub="NDCT Rules 2019 statutory deadline"
-          accent={T.danger}
-          borderColor="rgba(255,69,58,0.25)"
+          accent={saeClocks.length > 0 ? T.danger : T.success}
+          borderColor={saeClocks.length > 0 ? 'rgba(255,69,58,0.25)' : T.border}
         />
         <KpiCard
           label="Ethics (IEC) Renewals"
@@ -134,8 +133,12 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
           <div>
             <p
               style={{
-                fontSize: 17, fontWeight: 600, color: T.success,
-                letterSpacing: '-0.374px', marginBottom: 4,
+                fontSize: 17,
+                fontWeight: 600,
+                color: T.success,
+                letterSpacing: '-0.374px',
+                marginBottom: 4,
+                margin: '0 0 4px',
               }}
             >
               All SAE Clocks Clear
@@ -160,53 +163,84 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
             overflow: 'hidden',
           }}
         >
-          {/* Accent bar */}
+          {/* Accent bar — solid, no gradient */}
           <div
             style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-              background: 'linear-gradient(90deg, #ff453a, #ff9f0a)',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: T.danger,
             }}
           />
 
           <div
             style={{
-              display: 'flex', justifyContent: 'space-between',
-              alignItems: 'flex-start', gap: 24,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 24,
             }}
           >
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
                 <span
                   style={{
-                    fontSize: 10, fontWeight: 700, color: T.danger,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: T.danger,
                     background: 'rgba(255,69,58,0.12)',
                     border: '1px solid rgba(255,69,58,0.4)',
-                    padding: '3px 10px', borderRadius: 9999,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    padding: '3px 10px',
+                    borderRadius: 9999,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  🚨 Statutory 24-Hour SAE Clock
+                  <AlertTriangle size={10} />
+                  Statutory 24-Hour SAE Clock
                 </span>
                 <span style={{ fontSize: 12, color: T.dim }}>
-                  Participant: <strong style={{ color: T.ink }}>{clock.participant_code}</strong>
+                  Participant:{' '}
+                  <strong style={{ color: T.ink }}>{clock.participant_code}</strong>
                 </span>
               </div>
               <h3
                 style={{
-                  fontSize: 21, fontWeight: 600, color: T.ink,
-                  letterSpacing: '-0.374px', lineHeight: 1.19, marginBottom: 8,
+                  fontSize: 21,
+                  fontWeight: 600,
+                  color: T.ink,
+                  letterSpacing: '-0.374px',
+                  lineHeight: 1.19,
+                  marginBottom: 8,
+                  margin: '0 0 8px',
                 }}
               >
                 {clock.event_term}
               </h3>
               <p style={{ fontSize: 14, color: '#ff6961', letterSpacing: '-0.224px', margin: 0 }}>
-                Statutory Deadline: {new Date(clock.statutory_24h_deadline).toLocaleString()} · NDCT Rules 2019 / NPvCC
+                Statutory Deadline:{' '}
+                {new Date(clock.statutory_24h_deadline).toLocaleString()} · NDCT Rules 2019 / NPvCC
               </p>
             </div>
 
             <div
               style={{
-                display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                flexShrink: 0,
               }}
             >
               <div
@@ -218,12 +252,22 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
                   border: '1px solid rgba(255,69,58,0.3)',
                 }}
               >
-                <span style={{ fontSize: 11, color: T.dim, display: 'block', marginBottom: 4 }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: T.dim,
+                    display: 'block',
+                    marginBottom: 4,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
                   Time Remaining
                 </span>
                 <span
                   style={{
-                    fontSize: 28, fontWeight: 700,
+                    fontSize: 28,
+                    fontWeight: 700,
                     color: clock.is_overdue ? T.danger : T.warning,
                     letterSpacing: '-0.374px',
                     fontFamily: 'SF Mono, ui-monospace, monospace',
@@ -236,12 +280,21 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
                 onClick={() => downloadNpvcc(clock.id)}
                 disabled={downloading}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  background: T.danger, color: '#ffffff', border: 'none',
-                  borderRadius: 9999, padding: '11px 22px',
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                  letterSpacing: '-0.224px', transition: 'transform 0.1s ease',
-                  fontFamily: 'inherit', opacity: downloading ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: T.danger,
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 9999,
+                  padding: '11px 22px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  letterSpacing: '-0.224px',
+                  transition: 'transform 0.1s ease',
+                  fontFamily: 'inherit',
+                  opacity: downloading ? 0.6 : 1,
                 }}
                 onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
                 onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -255,44 +308,84 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refre
       ))}
 
       {/* CTRI & IEC detail tile */}
-      <Section style={{ background: T.tileDark2 }}>
+      <div
+        style={{
+          background: T.tileDark2,
+          border: `1px solid ${T.borderDark}`,
+          borderRadius: 18,
+          padding: 28,
+        }}
+      >
         <h3
           style={{
-            fontSize: 17, fontWeight: 600, color: T.ink,
-            letterSpacing: '-0.374px', marginBottom: 20,
+            fontSize: 17,
+            fontWeight: 600,
+            color: T.ink,
+            letterSpacing: '-0.374px',
+            marginBottom: 20,
+            margin: '0 0 20px',
           }}
         >
           Regulatory Clearances — Active Study
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           {[
-            { label: 'CTRI Registration ID', value: study?.ctri_registration?.ctri_id || '—', accent: T.primaryOnDark },
-            { label: 'Next CTRI 6-Month Update', value: study?.ctri_registration?.next_mandatory_update_due || '—', accent: T.ink },
-            { label: 'IEC Decision Status', value: iecApproval ? '✓ APPROVED' : 'Pending', accent: T.success },
-            { label: 'IEC Clearance Valid Until', value: iecApproval?.valid_until || '—', accent: T.ink },
+            {
+              label: 'CTRI Registration ID',
+              value: study?.ctri_registration?.ctri_id || '—',
+              accent: T.primaryOnDark,
+            },
+            {
+              label: 'Next CTRI 6-Month Update',
+              value: study?.ctri_registration?.next_mandatory_update_due || '—',
+              accent: T.ink,
+            },
+            {
+              label: 'IEC Decision Status',
+              value: iecApproval ? 'APPROVED' : 'Pending',
+              accent: T.success,
+            },
+            {
+              label: 'IEC Clearance Valid Until',
+              value: iecApproval?.valid_until || '—',
+              accent: T.ink,
+            },
           ].map(({ label, value, accent }) => (
             <div
               key={label}
               style={{
-                background: T.bg, borderRadius: 11, padding: '16px 20px',
+                background: T.bg,
+                borderRadius: 11,
+                padding: '16px 20px',
                 border: `1px solid ${T.borderDark}`,
               }}
             >
               <span
                 style={{
-                  fontSize: 11, color: T.dim, display: 'block',
-                  marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em',
+                  fontSize: 11,
+                  color: T.dim,
+                  display: 'block',
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                 }}
               >
                 {label}
               </span>
-              <span style={{ fontSize: 17, fontWeight: 600, color: accent, letterSpacing: '-0.374px' }}>
+              <span
+                style={{
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: accent,
+                  letterSpacing: '-0.374px',
+                }}
+              >
                 {value}
               </span>
             </div>
           ))}
         </div>
-      </Section>
+      </div>
     </div>
   );
 };

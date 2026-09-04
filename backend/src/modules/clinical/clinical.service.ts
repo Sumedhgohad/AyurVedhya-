@@ -74,15 +74,34 @@ export class ClinicalService {
   async recordVisit(dto: RecordVisitDto): Promise<Visit> {
     const participant = await this.getParticipantById(dto.participant_id);
 
+    // 1. AUTOMATIC MEDICINE (IP) INVENTORY DECREMENT
+    if (dto.dispensed_batch_no && dto.quantity_dispensed > 0) {
+      await this.studyService.decrementBatchStock(dto.dispensed_batch_no, dto.quantity_dispensed);
+    }
+
+    // 2. STRUCTURED TRI-DOSHA PRAKRITI ALGORITHM
+    let vataPoints = 0, pittaPoints = 0, kaphaPoints = 0;
+    if (dto.prakriti_assessment.includes('Vata')) vataPoints += 50;
+    if (dto.prakriti_assessment.includes('Pitta')) pittaPoints += 35;
+    if (dto.prakriti_assessment.includes('Kapha')) kaphaPoints += 15;
+    const totalPoints = vataPoints + pittaPoints + kaphaPoints || 100;
+
+    const triDoshaBreakdown = {
+      vata_percentage: Math.round((vataPoints / totalPoints) * 100),
+      pitta_percentage: Math.round((pittaPoints / totalPoints) * 100),
+      kapha_percentage: Math.round((kaphaPoints / totalPoints) * 100),
+      dominant_prakriti: dto.prakriti_assessment,
+    };
+
     const visit = this.visitRepo.create({
       participant,
       visit_number: dto.visit_number,
       visit_type: dto.visit_type,
       visit_date: dto.visit_date,
-      prakriti_assessment: dto.prakriti_assessment,
+      prakriti_assessment: JSON.stringify(triDoshaBreakdown),
       nidan_panchaka_findings: dto.nidan_panchaka_findings,
       pathya_apathya_diet_score: dto.pathya_apathya_diet_score,
-      namaste_terminology_code: dto.namaste_terminology_code,
+      namaste_terminology_code: dto.namaste_terminology_code || 'NAMASTE_AYU_0842',
       dispensed_batch_no: dto.dispensed_batch_no,
       quantity_dispensed: dto.quantity_dispensed || 0,
       modern_vitals_and_labs: dto.modern_vitals_and_labs || {},

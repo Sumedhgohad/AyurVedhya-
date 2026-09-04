@@ -21,6 +21,8 @@ export const TopNav: React.FC = () => {
         justifyContent: 'space-between',
         paddingLeft: 24,
         paddingRight: 24,
+        fontFamily:
+          "'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       {/* Brand */}
@@ -34,6 +36,7 @@ export const TopNav: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
           <Activity size={12} color="#fff" />
@@ -52,13 +55,14 @@ export const TopNav: React.FC = () => {
         <span
           style={{
             fontSize: 11,
-            fontWeight: 400,
-            color: '#0066cc',
+            fontWeight: 600,
+            color: '#2997ff',
             background: 'rgba(0,102,204,0.12)',
             border: '1px solid rgba(0,102,204,0.25)',
             padding: '2px 9px',
             borderRadius: 9999,
-            letterSpacing: '-0.08px',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
           }}
         >
           AIIA · Ministry of Ayush
@@ -82,8 +86,8 @@ export const TopNav: React.FC = () => {
           >
             <div
               style={{
-                width: 24,
-                height: 24,
+                width: 26,
+                height: 26,
                 borderRadius: '50%',
                 background: '#0066cc',
                 display: 'flex',

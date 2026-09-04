@@ -133,4 +133,20 @@ export class StudyService {
 
     return await this.ipRepo.save(batch);
   }
+
+  async decrementBatchStock(batchNo: string, quantityToDeduct: number): Promise<StudyIpBatch> {
+    const batch = await this.ipRepo.findOne({ where: { batch_no: batchNo } });
+    if (!batch) {
+      throw new NotFoundException(`Medicine batch '${batchNo}' not found in pharmacy inventory.`);
+    }
+
+    if (batch.current_stock < quantityToDeduct) {
+      throw new BadRequestException(
+        `GCP INVENTORY ALERT: Insufficient stock for batch '${batchNo}'. Available: ${batch.current_stock}, Requested: ${quantityToDeduct}`,
+      );
+    }
+
+    batch.current_stock -= quantityToDeduct;
+    return await this.ipRepo.save(batch);
+  }
 }

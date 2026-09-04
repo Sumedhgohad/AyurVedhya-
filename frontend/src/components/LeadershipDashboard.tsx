@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Study, HealthScore } from '../types';
 import { api } from '../api/client';
+import { Download, Sparkles } from 'lucide-react';
 
 interface Props {
   studies: Study[];
@@ -24,26 +25,39 @@ const T = {
 };
 
 const KpiCard: React.FC<{ label: string; value: React.ReactNode; sub: string; accent?: string }> = ({
-  label, value, sub, accent = T.ink,
+  label,
+  value,
+  sub,
+  accent = T.ink,
 }) => (
   <div
     style={{
-      background: T.tile, border: `1px solid ${T.border}`,
-      borderRadius: 18, padding: 24,
+      background: T.tile,
+      border: `1px solid ${T.border}`,
+      borderRadius: 18,
+      padding: 24,
     }}
   >
     <p
       style={{
-        fontSize: 11, fontWeight: 600, color: T.dim,
-        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
+        fontSize: 11,
+        fontWeight: 600,
+        color: T.dim,
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        margin: '0 0 14px',
       }}
     >
       {label}
     </p>
     <div
       style={{
-        fontSize: 36, fontWeight: 600, color: accent,
-        letterSpacing: '-0.374px', lineHeight: 1.1, marginBottom: 6,
+        fontSize: 36,
+        fontWeight: 600,
+        color: accent,
+        letterSpacing: '-0.374px',
+        lineHeight: 1.1,
+        marginBottom: 6,
       }}
     >
       {value}
@@ -53,33 +67,65 @@ const KpiCard: React.FC<{ label: string; value: React.ReactNode; sub: string; ac
 );
 
 const ScoreBar: React.FC<{ label: string; score: number; weight: string; detail?: string }> = ({
-  label, score, weight, detail,
+  label,
+  score,
+  weight,
+  detail,
 }) => {
   const color = score >= 80 ? T.success : score >= 50 ? T.warning : T.danger;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: T.ink, letterSpacing: '-0.224px' }}>{label}</span>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: T.ink,
+              letterSpacing: '-0.224px',
+            }}
+          >
+            {label}
+          </span>
           {detail && (
             <span style={{ fontSize: 12, color: T.dim, marginLeft: 8 }}>{detail}</span>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 12, color: T.dim }}>{weight}</span>
-          <span style={{ fontSize: 17, fontWeight: 600, color, letterSpacing: '-0.374px' }}>{score}</span>
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: 600,
+              color,
+              letterSpacing: '-0.374px',
+            }}
+          >
+            {score}
+          </span>
         </div>
       </div>
       <div
         style={{
-          height: 4, background: 'rgba(255,255,255,0.08)',
-          borderRadius: 9999, overflow: 'hidden',
+          height: 4,
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: 9999,
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            height: '100%', width: `${score}%`, background: color,
-            borderRadius: 9999, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
+            height: '100%',
+            width: `${score}%`,
+            background: color,
+            borderRadius: 9999,
+            transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
           }}
         />
       </div>
@@ -93,7 +139,8 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
 
   useEffect(() => {
     if (study) {
-      api.get(`/ai/health-score/${study.id}`)
+      api
+        .get(`/ai/health-score/${study.id}`)
         .then((r) => setHealthScore(r.data))
         .catch(() => null);
     }
@@ -122,14 +169,16 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
           label="Trial Health Index"
           value={
             <span>
-              <span style={{ color: scoreColor }}>{score}</span>
-              {' '}
+              <span style={{ color: scoreColor }}>{score}</span>{' '}
               <span
                 style={{
-                  fontSize: 13, fontWeight: 600, color: scoreColor,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: scoreColor,
                   background: `${scoreColor}18`,
                   border: `1px solid ${scoreColor}44`,
-                  padding: '2px 10px', borderRadius: 9999,
+                  padding: '2px 10px',
+                  borderRadius: 9999,
                 }}
               >
                 {scoreStatus}
@@ -145,62 +194,102 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
           sub={`${studies.filter((s) => s.status === 'ENROLLING').length} currently enrolling · 100% regulatory clearance`}
           accent={T.primaryOnDark}
         />
+
         {/* Interoperability exports card */}
         <div
           style={{
-            background: T.tile, border: `1px solid ${T.border}`,
-            borderRadius: 18, padding: 24,
+            background: T.tile,
+            border: `1px solid ${T.border}`,
+            borderRadius: 18,
+            padding: 24,
           }}
         >
           <p
             style={{
-              fontSize: 11, fontWeight: 600, color: T.dim,
-              textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
+              fontSize: 11,
+              fontWeight: 600,
+              color: T.dim,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              margin: '0 0 14px',
             }}
           >
             Interoperability Exports
           </p>
           <p
             style={{
-              fontSize: 17, fontWeight: 600, color: T.purple,
-              letterSpacing: '-0.374px', marginBottom: 16,
+              fontSize: 17,
+              fontWeight: 600,
+              color: T.purple,
+              letterSpacing: '-0.374px',
+              margin: '0 0 16px',
             }}
           >
             FHIR R4 + CDISC SDTM
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
-            {[
-              {
-                label: '⬇ ABDM FHIR',
-                action: () => study && exportFile(`/interop/fhir/bundle/${study.id}`, `ABDM_FHIR_${study.short_code}.json`),
-              },
-              {
-                label: '⬇ CDISC SDTM',
-                action: () => study && exportFile(`/interop/cdisc/sdtm/${study.id}`, `CDISC_SDTM_${study.short_code}.json`),
-              },
-            ].map(({ label, action }) => (
-              <button
-                key={label}
-                onClick={action}
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: `1px solid rgba(255,255,255,0.14)`,
-                  borderRadius: 9999,
-                  padding: '7px 12px',
-                  color: T.ink,
-                  fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer',
-                  letterSpacing: '-0.12px',
-                  transition: 'transform 0.1s',
-                  fontFamily: 'inherit',
-                }}
-                onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-                onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-              >
-                {label}
-              </button>
-            ))}
+            <button
+              onClick={() =>
+                study && exportFile(
+                  `/interop/fhir/bundle/${study.id}`,
+                  `ABDM_FHIR_${study.short_code}.json`
+                )
+              }
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                background: 'transparent',
+                border: `1px solid ${T.border}`,
+                borderRadius: 9999,
+                padding: '7px 12px',
+                color: T.ink,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                letterSpacing: '-0.12px',
+                transition: 'transform 0.1s',
+                fontFamily: 'inherit',
+              }}
+              onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              <Download size={11} />
+              ABDM FHIR
+            </button>
+            <button
+              onClick={() =>
+                study && exportFile(
+                  `/interop/cdisc/sdtm/${study.id}`,
+                  `CDISC_SDTM_${study.short_code}.json`
+                )
+              }
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                background: 'transparent',
+                border: `1px solid ${T.border}`,
+                borderRadius: 9999,
+                padding: '7px 12px',
+                color: T.ink,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                letterSpacing: '-0.12px',
+                transition: 'transform 0.1s',
+                fontFamily: 'inherit',
+              }}
+              onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              <Download size={11} />
+              CDISC SDTM
+            </button>
           </div>
         </div>
       </div>
@@ -210,14 +299,19 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
         {/* Score Breakdown */}
         <div
           style={{
-            background: T.tileDark2, border: `1px solid ${T.borderDark}`,
-            borderRadius: 18, padding: 28,
+            background: T.tileDark2,
+            border: `1px solid ${T.borderDark}`,
+            borderRadius: 18,
+            padding: 28,
           }}
         >
           <h3
             style={{
-              fontSize: 17, fontWeight: 600, color: T.ink,
-              letterSpacing: '-0.374px', marginBottom: 24,
+              fontSize: 17,
+              fontWeight: 600,
+              color: T.ink,
+              letterSpacing: '-0.374px',
+              margin: '0 0 24px',
             }}
           >
             5-Pillar Trial Health Breakdown
@@ -229,7 +323,11 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
               weight="25%"
               detail={`${pillars?.recruitment.enrolled ?? 1}/${pillars?.recruitment.target ?? 120} enrolled`}
             />
-            <ScoreBar label="Regulatory Compliance" score={pillars?.regulatory_compliance.score ?? 100} weight="25%" />
+            <ScoreBar
+              label="Regulatory Compliance"
+              score={pillars?.regulatory_compliance.score ?? 100}
+              weight="25%"
+            />
             <ScoreBar
               label="Data Quality"
               score={pillars?.data_quality.score ?? 100}
@@ -243,15 +341,23 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
           {/* Composite */}
           <div
             style={{
-              marginTop: 24, paddingTop: 20,
-              borderTop: `1px solid rgba(255,255,255,0.06)`,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: 14, fontWeight: 600, color: T.dim }}>Composite Health Score</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: T.dim }}>
+              Composite Health Score
+            </span>
             <span
               style={{
-                fontSize: 34, fontWeight: 700, color: scoreColor, letterSpacing: '-0.374px',
+                fontSize: 34,
+                fontWeight: 700,
+                color: scoreColor,
+                letterSpacing: '-0.374px',
               }}
             >
               {score} / 100
@@ -268,20 +374,33 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
             padding: 28,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <span style={{ fontSize: 18 }}>✦</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: 20,
+            }}
+          >
+            <Sparkles size={16} color={T.purple} />
             <h3
               style={{
-                fontSize: 17, fontWeight: 600, color: T.purple, letterSpacing: '-0.374px',
+                fontSize: 17,
+                fontWeight: 600,
+                color: T.purple,
+                letterSpacing: '-0.374px',
+                margin: 0,
               }}
             >
               AI Trial Co-Pilot
             </h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(healthScore?.ai_predictive_recommendations ?? [
-              '✅ No risk factors detected. Trial is on track.',
-            ]).map((rec, i) => (
+            {(
+              healthScore?.ai_predictive_recommendations ?? [
+                'No risk factors detected. Trial is on track.',
+              ]
+            ).map((rec, i) => (
               <div
                 key={i}
                 style={{
@@ -305,8 +424,12 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
             <div style={{ marginTop: 24 }}>
               <p
                 style={{
-                  fontSize: 11, fontWeight: 600, color: T.dim,
-                  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: T.dim,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  margin: '0 0 12px',
                 }}
               >
                 Portfolio Overview
@@ -315,24 +438,44 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies }) => {
                 <div
                   key={s.id}
                   style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     padding: '10px 0',
-                    borderTop: `1px solid rgba(255,255,255,0.05)`,
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: T.ink, letterSpacing: '-0.224px' }}>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: T.ink,
+                        letterSpacing: '-0.224px',
+                      }}
+                    >
                       {s.short_code}
                     </span>
                     <p style={{ fontSize: 12, color: T.dim, margin: '2px 0 0' }}>{s.phase}</p>
                   </div>
                   <span
                     style={{
-                      fontSize: 11, fontWeight: 600,
+                      fontSize: 11,
+                      fontWeight: 600,
                       color: s.status === 'ENROLLING' ? T.success : T.warning,
-                      background: s.status === 'ENROLLING' ? 'rgba(52,199,89,0.1)' : 'rgba(255,159,10,0.1)',
-                      border: `1px solid ${s.status === 'ENROLLING' ? 'rgba(52,199,89,0.3)' : 'rgba(255,159,10,0.3)'}`,
-                      padding: '2px 10px', borderRadius: 9999,
+                      background:
+                        s.status === 'ENROLLING'
+                          ? 'rgba(52,199,89,0.1)'
+                          : 'rgba(255,159,10,0.1)',
+                      border: `1px solid ${
+                        s.status === 'ENROLLING'
+                          ? 'rgba(52,199,89,0.3)'
+                          : 'rgba(255,159,10,0.3)'
+                      }`,
+                      padding: '2px 10px',
+                      borderRadius: 9999,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
                     }}
                   >
                     {s.status}

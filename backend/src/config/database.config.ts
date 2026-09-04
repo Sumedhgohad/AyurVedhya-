@@ -19,3 +19,13 @@ export const clinicalDatabaseConfig: TypeOrmModuleOptions = {
   synchronize: true,
   logging: false,
 };
+
+// 3. Connection for Audit & Integrity Database
+export const auditDatabaseConfig: TypeOrmModuleOptions = {
+  name: 'auditConnection',
+  type: 'postgres',
+  url: process.env.AUDIT_DB_URL || 'postgresql://postgres:postgres_secure_pass@localhost:5432/audit_integrity_db',
+  autoLoadEntities: true,
+  synchronize: true,
+  logging: false,
+};

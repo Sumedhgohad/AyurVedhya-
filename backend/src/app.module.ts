@@ -5,19 +5,20 @@ import { studyDatabaseConfig, clinicalDatabaseConfig, auditDatabaseConfig } from
 import { StudyModule } from './modules/study/study.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { SafetyModule } from './modules/safety/safety.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../.env' }),
-    // Database 1: study_governance_db
     TypeOrmModule.forRoot(studyDatabaseConfig),
-    // Database 2: clinical_safety_db
     TypeOrmModule.forRoot(clinicalDatabaseConfig),
-    // Database 3: audit_integrity_db
     TypeOrmModule.forRoot(auditDatabaseConfig),
+    RedisModule,
     StudyModule,
     ClinicalModule,
     AuditModule,
+    SafetyModule,
   ],
 })
 export class AppModule {}

@@ -1,0 +1,58 @@
+# ========================
+# Environment Variables
+# ========================
+.env
+.env.local
+.env.*.local
+
+# ========================
+# Node.js / npm
+# ========================
+**/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# ========================
+# NestJS Build Output
+# ========================
+**/dist/
+dist/
+
+# ========================
+# TypeScript incremental cache
+# ========================
+*.tsbuildinfo
+
+# ========================
+# Docker
+# ========================
+docker-compose.override.yml
+
+# ========================
+# OS metadata
+# ========================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# ========================
+# IDE / Editor
+# ========================
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ========================
+# Test coverage
+# ========================
+/coverage
+/.nyc_output

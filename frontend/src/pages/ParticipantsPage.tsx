@@ -1,6 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { api } from '../api/client';
-import { Users, UserPlus, CheckCircle2, ClipboardList, Activity } from 'lucide-react';
+
+const T = {
+  tile: '#1d1d1f',
+  bg: '#000000',
+  border: 'rgba(255,255,255,0.08)',
+  ink: '#ffffff',
+  muted: '#cccccc',
+  dim: '#7a7a7a',
+  primary: '#0066cc',
+  primaryFocus: '#0071e3',
+  primaryOnDark: '#2997ff',
+  success: '#34c759',
+  danger: '#ff453a',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  background: T.bg, border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 11, padding: '9px 14px',
+  color: T.ink, fontSize: 14, letterSpacing: '-0.224px',
+  outline: 'none', fontFamily: 'inherit',
+  transition: 'border-color 0.15s',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 600,
+  color: T.dim, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6,
+};
 
 export const ParticipantsPage: React.FC = () => {
   const [patientCode, setPatientCode] = useState('');
@@ -17,24 +44,18 @@ export const ParticipantsPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Fetch active study ID
       const sRes = await api.get('/study/list');
       const studyId = sRes.data[0]?.id || '4f722d35-7e9d-44cf-bf3f-af97d557cdbb';
-
       const pRes = await api.post('/clinical/participants/enroll', {
         study_id: studyId,
         participant_code: patientCode || `SUBJ-AIIA-${Math.floor(100 + Math.random() * 900)}`,
-        age: Number(age),
-        gender,
+        age: Number(age), gender,
         enrollment_date: new Date().toISOString().split('T')[0],
-        consent_type: 'WRITTEN',
-        language_code: 'hi',
+        consent_type: 'WRITTEN', language_code: 'hi',
       });
-
       await api.post('/clinical/visits/record', {
         participant_id: pRes.data.id,
-        visit_number: 1,
-        visit_type: 'BASELINE',
+        visit_number: 1, visit_type: 'BASELINE',
         visit_date: new Date().toISOString().split('T')[0],
         prakriti_assessment: prakriti,
         nidan_panchaka_findings: 'Chronic Manasika Hetu, Pitta-Vata vitiation documented.',
@@ -43,17 +64,9 @@ export const ParticipantsPage: React.FC = () => {
         dispensed_batch_no: 'ASH-2026-B1',
         quantity_dispensed: 60,
       });
-
       setNotification({ msg: `✓ ${pRes.data.participant_code} successfully enrolled — Baseline Hybrid CRF locked.`, ok: true });
       setEnrolledList((prev) => [
-        {
-          code: pRes.data.participant_code,
-          age,
-          gender,
-          prakriti,
-          dietScore,
-          date: new Date().toLocaleDateString(),
-        },
+        { code: pRes.data.participant_code, age, gender, prakriti, dietScore, date: new Date().toLocaleDateString() },
         ...prev,
       ]);
       setPatientCode('');
@@ -64,69 +77,86 @@ export const ParticipantsPage: React.FC = () => {
     }
   };
 
+  const allParticipants = [
+    { code: 'SUBJ-AIIA-001', age: '34', gender: 'Female', prakriti: 'Vata-Pitta', dietScore: 90, status: 'Active Baseline' },
+    ...enrolledList,
+  ];
+
   return (
-    <div className="space-y-6 font-sans">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2">
-          <Users className="w-6 h-6 text-[#2997ff]" />
-          Enrolled Participants & Hybrid Ayush CRFs
+        <h1
+          style={{
+            fontSize: 34, fontWeight: 600, color: T.ink,
+            letterSpacing: '-0.374px', lineHeight: 1.1, margin: '0 0 6px',
+          }}
+        >
+          Enrolled Participants &amp; Hybrid Ayush CRFs
         </h1>
-        <p className="text-xs text-[#7a7a7a] mt-1">
+        <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', margin: 0 }}>
           NAMASTE Terminology, Prakriti Pariksha, and Pathya-Apathya Compliance Tracking.
         </p>
       </div>
 
+      {/* Notification */}
       {notification && (
         <div
-          className={`p-4 rounded-[14px] border text-xs font-medium ${
-            notification.ok
-              ? 'bg-[#34c759]/10 border-[#34c759]/30 text-[#34c759]'
-              : 'bg-[#ff453a]/10 border-[#ff453a]/30 text-[#ff453a]'
-          }`}
+          style={{
+            padding: '14px 20px', borderRadius: 11,
+            border: `1px solid ${notification.ok ? 'rgba(52,199,89,0.35)' : 'rgba(255,69,58,0.35)'}`,
+            background: notification.ok ? 'rgba(52,199,89,0.07)' : 'rgba(255,69,58,0.07)',
+            color: notification.ok ? T.success : T.danger,
+            fontSize: 14, letterSpacing: '-0.224px',
+          }}
         >
           {notification.msg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Enroll Form Card */}
-        <div className="lg:col-span-1 bg-[#1d1d1f] border border-white/10 rounded-[18px] p-6 space-y-4">
-          <h2 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-[#2997ff]" />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '320px 1fr',
+          gap: 20,
+          alignItems: 'start',
+        }}
+      >
+        {/* Enroll form */}
+        <div
+          style={{
+            background: T.tile, border: `1px solid ${T.border}`,
+            borderRadius: 18, padding: 28,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 17, fontWeight: 600, color: T.ink,
+              letterSpacing: '-0.374px', marginBottom: 20,
+            }}
+          >
             New Subject Enrollment
           </h2>
 
-          <form onSubmit={handleEnroll} className="space-y-4 text-xs">
+          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">
-                Participant Code
-              </label>
+              <label style={labelStyle}>Participant Code</label>
               <input
-                type="text"
-                value={patientCode}
-                onChange={(e) => setPatientCode(e.target.value)}
-                placeholder="e.g. SUBJ-AIIA-005"
-                className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc]"
+                style={inputStyle} placeholder="e.g. SUBJ-AIIA-005"
+                value={patientCode} onChange={(e) => setPatientCode(e.target.value)}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">Age</label>
-                <input
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
-                />
+                <label style={labelStyle}>Age</label>
+                <input type="number" style={inputStyle} value={age} onChange={(e) => setAge(e.target.value)} />
               </div>
-
               <div>
-                <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">Gender</label>
+                <label style={labelStyle}>Gender</label>
                 <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
+                  style={{ ...inputStyle, appearance: 'none' }}
+                  value={gender} onChange={(e) => setGender(e.target.value)}
                 >
                   <option value="Female">Female</option>
                   <option value="Male">Male</option>
@@ -136,93 +166,128 @@ export const ParticipantsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">
-                Prakriti Classification
-              </label>
+              <label style={labelStyle}>Prakriti Classification</label>
               <select
-                value={prakriti}
-                onChange={(e) => setPrakriti(e.target.value)}
-                className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
+                style={{ ...inputStyle, appearance: 'none' }}
+                value={prakriti} onChange={(e) => setPrakriti(e.target.value)}
               >
-                <option value="Vata-Pitta">Vata-Pitta</option>
-                <option value="Kapha-Vata">Kapha-Vata</option>
-                <option value="Pitta-Kapha">Pitta-Kapha</option>
-                <option value="Tridoshaja">Tridoshaja</option>
+                {['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].map((v) => (
+                  <option key={v}>{v}</option>
+                ))}
               </select>
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider">
-                  Pathya-Apathya Diet Score
-                </label>
-                <span className="text-[#34c759] font-semibold">{dietScore}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Pathya-Apathya Diet Score</label>
+                <span style={{ fontSize: 14, fontWeight: 600, color: T.success }}>{dietScore}%</span>
               </div>
               <input
-                type="range"
-                min="0"
-                max="100"
-                value={dietScore}
+                type="range" min="0" max="100" value={dietScore}
                 onChange={(e) => setDietScore(Number(e.target.value))}
-                className="w-full accent-[#0066cc]"
+                style={{ width: '100%', accentColor: T.primary }}
               />
             </div>
 
             <div>
-              <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">
-                NAMASTE Terminology Code
-              </label>
+              <label style={labelStyle}>NAMASTE Terminology Code</label>
               <input
-                type="text"
-                value={namasteCode}
+                style={inputStyle} value={namasteCode}
                 onChange={(e) => setNamasteCode(e.target.value)}
-                className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
               />
             </div>
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#0066cc] hover:bg-[#0052a3] text-white font-normal py-3 rounded-full transition-all shadow-md shadow-[#0066cc]/20 active:scale-95 disabled:opacity-50 text-xs"
+              type="submit" disabled={loading}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: T.primary, color: '#ffffff', border: 'none',
+                borderRadius: 9999, padding: '11px 22px',
+                fontSize: 17, fontWeight: 400, letterSpacing: '-0.374px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'transform 0.1s ease', fontFamily: 'inherit',
+              }}
+              onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             >
-              {loading ? 'Enrolling Subject...' : 'Enroll & Save Hybrid CRF'}
+              {loading ? 'Enrolling Subject…' : 'Enroll & Save Hybrid CRF'}
             </button>
           </form>
         </div>
 
-        {/* Participant History Card */}
-        <div className="lg:col-span-2 bg-[#1d1d1f] border border-white/10 rounded-[18px] p-6 space-y-4">
-          <h2 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-[#34c759]" />
-            Enrolled Cohort & Baseline CRF Records
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[#cccccc]">
-              <thead className="bg-[#000000] text-[#7a7a7a] uppercase font-semibold text-[10px] tracking-wider border-b border-white/10">
-                <tr>
-                  <th className="px-4 py-3">Subject ID</th>
-                  <th className="px-4 py-3">Demographics</th>
-                  <th className="px-4 py-3">Prakriti</th>
-                  <th className="px-4 py-3">Diet Score</th>
-                  <th className="px-4 py-3">Status</th>
+        {/* Cohort table */}
+        <div
+          style={{
+            background: T.tile, border: `1px solid ${T.border}`,
+            borderRadius: 18, overflow: 'hidden',
+          }}
+        >
+          <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${T.border}` }}>
+            <h2
+              style={{
+                fontSize: 17, fontWeight: 600, color: T.ink,
+                letterSpacing: '-0.374px', margin: 0,
+              }}
+            >
+              Enrolled Cohort &amp; Baseline CRF Records
+            </h2>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%', borderCollapse: 'collapse',
+                fontSize: 14, letterSpacing: '-0.224px',
+              }}
+            >
+              <thead>
+                <tr style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+                  {['Subject ID', 'Demographics', 'Prakriti', 'Diet Score', 'Status'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '12px 20px', textAlign: 'left',
+                        fontSize: 11, fontWeight: 600, color: T.dim,
+                        textTransform: 'uppercase', letterSpacing: '0.06em',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {[
-                  { code: 'SUBJ-AIIA-001', age: '34', gender: 'Female', prakriti: 'Vata-Pitta', dietScore: 90, status: 'Active Baseline' },
-                  ...enrolledList,
-                ].map((pt, i) => (
-                  <tr key={i} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-white">{pt.code}</td>
-                    <td className="px-4 py-3">{pt.age} yrs · {pt.gender}</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-[#0066cc]/15 text-[#2997ff] border border-[#0066cc]/30 px-2 py-0.5 rounded-full text-[10px] font-medium">
+              <tbody>
+                {allParticipants.map((pt, i) => (
+                  <tr
+                    key={i}
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.1s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: T.ink }}>{pt.code}</td>
+                    <td style={{ padding: '14px 20px', color: T.muted }}>
+                      {pt.age} yrs · {pt.gender}
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <span
+                        style={{
+                          fontSize: 11, fontWeight: 600,
+                          color: T.primaryOnDark,
+                          background: 'rgba(41,151,255,0.1)',
+                          border: '1px solid rgba(41,151,255,0.25)',
+                          padding: '2px 9px', borderRadius: 9999,
+                        }}
+                      >
                         {pt.prakriti}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-[#34c759]">{pt.dietScore}%</td>
-                    <td className="px-4 py-3 text-[11px] text-[#7a7a7a]">✓ CRF Verified</td>
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: T.success }}>
+                      {pt.dietScore}%
+                    </td>
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: T.dim }}>
+                      ✓ CRF Verified
+                    </td>
                   </tr>
                 ))}
               </tbody>

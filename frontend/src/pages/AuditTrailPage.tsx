@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { History, Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
+
+const T = {
+  tile: '#1d1d1f',
+  bg: '#000000',
+  border: 'rgba(255,255,255,0.08)',
+  ink: '#ffffff',
+  muted: '#cccccc',
+  dim: '#7a7a7a',
+  primary: '#0066cc',
+  primaryFocus: '#0071e3',
+  success: '#34c759',
+  danger: '#ff453a',
+  purple: '#bf5af2',
+};
 
 export const AuditTrailPage: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [filter, setFilter] = useState('');
+  const [searchFocus, setSearchFocus] = useState(false);
 
   useEffect(() => {
     api.get('/audit/all')
@@ -20,74 +35,191 @@ export const AuditTrailPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 font-sans">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Page header */}
+      <div
+        style={{
+          display: 'flex', flexWrap: 'wrap',
+          justifyContent: 'space-between', alignItems: 'flex-start', gap: 16,
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2">
-            <History className="w-6 h-6 text-[#bf5af2]" />
+          <h1
+            style={{
+              fontSize: 34, fontWeight: 600, color: T.ink,
+              letterSpacing: '-0.374px', lineHeight: 1.1, margin: '0 0 6px',
+            }}
+          >
             GCP / ALCOA+ Immutable Audit Trail Explorer
           </h1>
-          <p className="text-xs text-[#7a7a7a] mt-1">
-            Permanent, append-only record history stored in <code className="text-[#bf5af2]">audit_integrity_db</code>. Every change records Who, What, When, and Reason.
+          <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', margin: 0 }}>
+            Permanent, append-only record history stored in{' '}
+            <code
+              style={{
+                fontSize: 12, color: T.purple,
+                background: 'rgba(191,90,242,0.1)',
+                padding: '1px 6px', borderRadius: 5,
+                fontFamily: 'SF Mono, ui-monospace, monospace',
+              }}
+            >
+              audit_integrity_db
+            </code>
+            . Every change records Who, What, When, and Reason.
           </p>
         </div>
 
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#7a7a7a]" />
+        {/* Search input — pill shape per verge.md */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <Search
+            size={13}
+            color={T.dim}
+            style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}
+          />
           <input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Search by Entity, User, or Reason..."
-            className="bg-[#1d1d1f] border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc] w-72"
+            placeholder="Search by entity, user, or reason…"
+            style={{
+              background: T.tile,
+              border: `1px solid ${searchFocus ? T.primaryFocus : T.border}`,
+              borderRadius: 9999,
+              padding: '10px 16px 10px 36px',
+              fontSize: 14,
+              color: T.ink,
+              letterSpacing: '-0.224px',
+              outline: 'none',
+              width: 280,
+              fontFamily: 'inherit',
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={() => setSearchFocus(true)}
+            onBlur={() => setSearchFocus(false)}
           />
         </div>
       </div>
 
-      <div className="bg-[#1d1d1f] border border-white/10 rounded-[18px] overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#cccccc]">
-            <thead className="bg-[#000000] text-[#7a7a7a] uppercase font-semibold text-[10px] tracking-wider border-b border-white/10">
-              <tr>
-                <th className="px-5 py-3.5">Timestamp (UTC)</th>
-                <th className="px-5 py-3.5">User & Role</th>
-                <th className="px-5 py-3.5">Action & Entity</th>
-                <th className="px-5 py-3.5">Change Delta (Old ➔ New)</th>
-                <th className="px-5 py-3.5">GCP Audit Reason</th>
+      {/* Audit table */}
+      <div
+        style={{
+          background: T.tile,
+          border: `1px solid ${T.border}`,
+          borderRadius: 18,
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table
+            style={{
+              width: '100%', borderCollapse: 'collapse',
+              fontSize: 13, letterSpacing: '-0.12px',
+            }}
+          >
+            <thead>
+              <tr style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+                {['Timestamp (UTC)', 'User & Role', 'Action & Entity', 'Change Delta (Old → New)', 'GCP Audit Reason'].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: '12px 20px', textAlign: 'left',
+                      fontSize: 10, fontWeight: 600, color: T.dim,
+                      textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody>
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-5 py-4 font-mono text-[11px] text-[#7a7a7a]">
+                <tr
+                  key={log.id}
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td
+                    style={{
+                      padding: '14px 20px',
+                      fontFamily: 'SF Mono, ui-monospace, monospace',
+                      fontSize: 11, color: T.dim, whiteSpace: 'nowrap',
+                    }}
+                  >
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
-                  <td className="px-5 py-4">
-                    <span className="font-semibold text-white block">{log.user_email}</span>
-                    <span className="text-[10px] text-[#bf5af2] font-medium">{log.user_role}</span>
+                  <td style={{ padding: '14px 20px' }}>
+                    <span
+                      style={{
+                        display: 'block', fontSize: 13, fontWeight: 600,
+                        color: T.ink, letterSpacing: '-0.224px',
+                      }}
+                    >
+                      {log.user_email}
+                    </span>
+                    <span style={{ fontSize: 11, color: T.purple, fontWeight: 600 }}>
+                      {log.user_role}
+                    </span>
                   </td>
-                  <td className="px-5 py-4">
-                    <span className="bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <td style={{ padding: '14px 20px' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        fontSize: 10, fontWeight: 700,
+                        color: T.purple,
+                        background: 'rgba(191,90,242,0.1)',
+                        border: '1px solid rgba(191,90,242,0.25)',
+                        padding: '2px 9px', borderRadius: 9999,
+                        textTransform: 'uppercase', letterSpacing: '0.04em',
+                        marginBottom: 4,
+                      }}
+                    >
                       {log.action}
                     </span>
-                    <span className="block text-[11px] text-[#7a7a7a] mt-1 font-mono">{log.entity_type}</span>
+                    <span
+                      style={{
+                        display: 'block', fontSize: 11, color: T.dim,
+                        fontFamily: 'SF Mono, ui-monospace, monospace',
+                      }}
+                    >
+                      {log.entity_type}
+                    </span>
                   </td>
-                  <td className="px-5 py-4 font-mono text-[10px]">
+                  <td style={{ padding: '14px 20px', fontFamily: 'SF Mono, ui-monospace, monospace', fontSize: 11 }}>
                     {log.old_values ? (
-                      <div className="flex items-center gap-1.5 text-[#7a7a7a]">
-                        <span className="text-[#ff453a]">{JSON.stringify(log.old_values)}</span>
-                        <ArrowRight className="w-3 h-3 text-[#7a7a7a] shrink-0" />
-                        <span className="text-[#34c759]">{JSON.stringify(log.new_values)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ color: T.danger }}>{JSON.stringify(log.old_values)}</span>
+                        <ArrowRight size={10} color={T.dim} style={{ flexShrink: 0 }} />
+                        <span style={{ color: T.success }}>{JSON.stringify(log.new_values)}</span>
                       </div>
                     ) : (
-                      <span className="text-[#34c759]">Created: {JSON.stringify(log.new_values)}</span>
+                      <span style={{ color: T.success }}>Created: {JSON.stringify(log.new_values)}</span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-[#cccccc] text-xs max-w-xs">
+                  <td
+                    style={{
+                      padding: '14px 20px', fontSize: 13,
+                      color: T.muted, letterSpacing: '-0.12px', maxWidth: 260,
+                    }}
+                  >
                     {log.reason || 'Standard Transaction'}
                   </td>
                 </tr>
               ))}
+
+              {filteredLogs.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    style={{
+                      padding: 48, textAlign: 'center',
+                      fontSize: 14, color: T.dim, letterSpacing: '-0.224px',
+                    }}
+                  >
+                    {logs.length === 0 ? 'Loading audit records…' : 'No records match your search.'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

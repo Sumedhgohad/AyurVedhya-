@@ -5,11 +5,28 @@ import { TopNav } from './TopNav';
 
 export const AppLayout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#000000] text-white flex flex-col font-sans selection:bg-[#0066cc] selection:text-white">
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#000000',
+        color: '#ffffff',
+        fontFamily:
+          "'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        WebkitFontSmoothing: 'antialiased',
+      }}
+    >
       <TopNav />
-      <div className="flex flex-1">
+      <div style={{ display: 'flex' }}>
         <Sidebar />
-        <main className="flex-1 p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+        <main
+          style={{
+            flex: 1,
+            padding: '40px 48px',
+            overflowY: 'auto',
+            minHeight: 'calc(100vh - 44px)',
+            maxWidth: 1200,
+          }}
+        >
           <Outlet />
         </main>
       </div>

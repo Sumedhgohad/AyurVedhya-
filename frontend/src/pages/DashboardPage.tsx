@@ -31,16 +31,37 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em]">
+        <h1
+          style={{
+            fontSize: 34,
+            fontWeight: 600,
+            color: '#ffffff',
+            letterSpacing: '-0.374px',
+            lineHeight: 1.1,
+            margin: '0 0 6px',
+          }}
+        >
           Welcome, {user?.fullName}
         </h1>
-        <p className="text-xs text-[#7a7a7a] mt-1">
-          Active Role Persona: <strong className="text-[#2997ff]">{user?.roleDisplayName}</strong>
+        <p
+          style={{
+            fontSize: 14,
+            color: '#7a7a7a',
+            letterSpacing: '-0.224px',
+            margin: 0,
+          }}
+        >
+          Active Role Persona:{' '}
+          <strong style={{ color: '#2997ff', fontWeight: 600 }}>
+            {user?.roleDisplayName}
+          </strong>
         </p>
       </div>
 
+      {/* Role-dispatched dashboard */}
       {user?.role === 'ROLE_INVESTIGATOR' && (
         <InvestigatorDashboard studies={studies} refreshData={loadData} />
       )}

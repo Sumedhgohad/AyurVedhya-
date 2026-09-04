@@ -1,21 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { Study } from '../types';
-import { Share2, Download, Code2, Database } from 'lucide-react';
+import { Download, Code2, Database } from 'lucide-react';
+
+const T = {
+  tile: '#1d1d1f',
+  bg: '#000000',
+  border: 'rgba(255,255,255,0.08)',
+  ink: '#ffffff',
+  muted: '#cccccc',
+  dim: '#7a7a7a',
+  primary: '#0066cc',
+  primaryOnDark: '#2997ff',
+  purple: '#bf5af2',
+};
 
 export const InteroperabilityPage: React.FC = () => {
   const [studies, setStudies] = useState<Study[]>([]);
   const [fhirPreview, setFhirPreview] = useState<any>(null);
   const [cdiscPreview, setCdiscPreview] = useState<any>(null);
-
   const activeStudy = studies[0];
 
   useEffect(() => {
     api.get('/study/list').then((res) => {
       setStudies(res.data);
       if (res.data[0]) {
-        api.get(`/interop/fhir/bundle/${res.data[0].id}`).then((f) => setFhirPreview(f.data)).catch(() => null);
-        api.get(`/interop/cdisc/sdtm/${res.data[0].id}`).then((c) => setCdiscPreview(c.data)).catch(() => null);
+        api.get(`/interop/fhir/bundle/${res.data[0].id}`)
+          .then((f) => setFhirPreview(f.data))
+          .catch(() => null);
+        api.get(`/interop/cdisc/sdtm/${res.data[0].id}`)
+          .then((c) => setCdiscPreview(c.data))
+          .catch(() => null);
       }
     });
   }, []);
@@ -30,68 +45,172 @@ export const InteroperabilityPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Page header */}
+      <div
+        style={{
+          display: 'flex', flexWrap: 'wrap',
+          justifyContent: 'space-between', alignItems: 'flex-start', gap: 16,
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2">
-            <Share2 className="w-6 h-6 text-[#bf5af2]" />
-            Universal Interoperability & Data Export Hub
+          <h1
+            style={{
+              fontSize: 34, fontWeight: 600, color: T.ink,
+              letterSpacing: '-0.374px', lineHeight: 1.1, margin: '0 0 6px',
+            }}
+          >
+            Universal Interoperability &amp; Data Export Hub
           </h1>
-          <p className="text-xs text-[#7a7a7a] mt-1">
+          <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', margin: 0 }}>
             Dual data mapping: HL7 FHIR v4.0 for Ayushman Bharat (ABDM) and CDISC SDTM v3.3 for international scientific publishing.
           </p>
         </div>
 
-        <div className="flex gap-2">
+        {/* Download buttons */}
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
-            onClick={() => downloadJson(fhirPreview, `ABDM_FHIR_Bundle_${activeStudy?.short_code || 'AIIA'}.json`)}
-            className="bg-[#bf5af2] hover:bg-[#a244d4] text-white font-normal text-xs px-4 py-2.5 rounded-full transition-all shadow-md active:scale-95 flex items-center gap-2"
+            onClick={() =>
+              downloadJson(fhirPreview, `ABDM_FHIR_Bundle_${activeStudy?.short_code || 'AIIA'}.json`)
+            }
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: T.purple, color: T.ink, border: 'none',
+              borderRadius: 9999, padding: '11px 22px',
+              fontSize: 14, fontWeight: 600, letterSpacing: '-0.224px',
+              cursor: 'pointer', transition: 'transform 0.1s ease', fontFamily: 'inherit',
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <Download className="w-4 h-4" />
+            <Download size={14} />
             Download ABDM FHIR JSON
           </button>
           <button
-            onClick={() => downloadJson(cdiscPreview, `CDISC_SDTM_Datasets_${activeStudy?.short_code || 'AIIA'}.json`)}
-            className="bg-[#0066cc] hover:bg-[#0052a3] text-white font-normal text-xs px-4 py-2.5 rounded-full transition-all shadow-md active:scale-95 flex items-center gap-2"
+            onClick={() =>
+              downloadJson(cdiscPreview, `CDISC_SDTM_Datasets_${activeStudy?.short_code || 'AIIA'}.json`)
+            }
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: T.primary, color: T.ink, border: 'none',
+              borderRadius: 9999, padding: '11px 22px',
+              fontSize: 14, fontWeight: 600, letterSpacing: '-0.224px',
+              cursor: 'pointer', transition: 'transform 0.1s ease', fontFamily: 'inherit',
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <Download className="w-4 h-4" />
+            <Download size={14} />
             Download CDISC SDTM JSON
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* FHIR Box */}
-        <div className="bg-[#1d1d1f] border border-white/10 rounded-[18px] p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-xs font-semibold text-[#bf5af2] flex items-center gap-1.5 uppercase tracking-wider">
-              <Code2 className="w-4 h-4" />
+      {/* Preview panels */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* FHIR panel */}
+        <div
+          style={{
+            background: T.tile, border: `1px solid ${T.border}`,
+            borderRadius: 18, padding: 28,
+            display: 'flex', flexDirection: 'column', gap: 18,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              borderBottom: `1px solid ${T.border}`, paddingBottom: 16,
+            }}
+          >
+            <span
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 11, fontWeight: 600, color: T.purple,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+              }}
+            >
+              <Code2 size={12} />
               HL7 FHIR v4.0 Bundle (Ayushman Bharat / Hospital EHR)
             </span>
-            <span className="text-[10px] bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30 px-2.5 py-0.5 rounded-full font-bold">
+            <span
+              style={{
+                fontSize: 10, fontWeight: 700,
+                color: T.purple,
+                background: 'rgba(191,90,242,0.1)',
+                border: '1px solid rgba(191,90,242,0.25)',
+                padding: '2px 9px', borderRadius: 9999,
+                letterSpacing: '0.04em',
+              }}
+            >
               Profile: ResearchStudy
             </span>
           </div>
 
-          <pre className="bg-[#000000] border border-white/10 p-4 rounded-[14px] text-[11px] font-mono text-[#e5ccff] overflow-x-auto h-80">
-            {fhirPreview ? JSON.stringify(fhirPreview, null, 2) : 'Loading FHIR bundle...'}
+          <pre
+            style={{
+              background: T.bg, border: `1px solid rgba(255,255,255,0.06)`,
+              borderRadius: 11, padding: 16,
+              fontSize: 11, lineHeight: 1.6,
+              fontFamily: 'SF Mono, ui-monospace, SFMono-Regular, Menlo, monospace',
+              color: '#e5ccff',
+              overflowX: 'auto', overflowY: 'auto',
+              height: 320, margin: 0,
+            }}
+          >
+            {fhirPreview ? JSON.stringify(fhirPreview, null, 2) : 'Loading FHIR bundle…'}
           </pre>
         </div>
 
-        {/* CDISC Box */}
-        <div className="bg-[#1d1d1f] border border-white/10 rounded-[18px] p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <span className="text-xs font-semibold text-[#2997ff] flex items-center gap-1.5 uppercase tracking-wider">
-              <Database className="w-4 h-4" />
-              CDISC SDTM v3.3 Tabular Dataset (DM & EX Domains)
+        {/* CDISC panel */}
+        <div
+          style={{
+            background: T.tile, border: `1px solid ${T.border}`,
+            borderRadius: 18, padding: 28,
+            display: 'flex', flexDirection: 'column', gap: 18,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              borderBottom: `1px solid ${T.border}`, paddingBottom: 16,
+            }}
+          >
+            <span
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 11, fontWeight: 600, color: T.primaryOnDark,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+              }}
+            >
+              <Database size={12} />
+              CDISC SDTM v3.3 Tabular Dataset (DM &amp; EX Domains)
             </span>
-            <span className="text-[10px] bg-[#0066cc]/15 text-[#2997ff] border border-[#0066cc]/30 px-2.5 py-0.5 rounded-full font-bold">
+            <span
+              style={{
+                fontSize: 10, fontWeight: 700,
+                color: T.primaryOnDark,
+                background: 'rgba(0,102,204,0.1)',
+                border: '1px solid rgba(0,102,204,0.25)',
+                padding: '2px 9px', borderRadius: 9999,
+                letterSpacing: '0.04em',
+              }}
+            >
               Standard: CDASH / SDTM
             </span>
           </div>
 
-          <pre className="bg-[#000000] border border-white/10 p-4 rounded-[14px] text-[11px] font-mono text-[#99ccff] overflow-x-auto h-80">
-            {cdiscPreview ? JSON.stringify(cdiscPreview, null, 2) : 'Loading CDISC datasets...'}
+          <pre
+            style={{
+              background: T.bg, border: `1px solid rgba(255,255,255,0.06)`,
+              borderRadius: 11, padding: 16,
+              fontSize: 11, lineHeight: 1.6,
+              fontFamily: 'SF Mono, ui-monospace, SFMono-Regular, Menlo, monospace',
+              color: '#99ccff',
+              overflowX: 'auto', overflowY: 'auto',
+              height: 320, margin: 0,
+            }}
+          >
+            {cdiscPreview ? JSON.stringify(cdiscPreview, null, 2) : 'Loading CDISC datasets…'}
           </pre>
         </div>
       </div>

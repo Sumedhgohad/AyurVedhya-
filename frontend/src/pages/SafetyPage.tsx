@@ -1,7 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { SaeClock, Study } from '../types';
-import { ShieldAlert, AlertTriangle, Clock, Download, Plus, CheckCircle2, X } from 'lucide-react';
+import { ShieldAlert, Clock, Download, Plus, CheckCircle2, X, AlertTriangle } from 'lucide-react';
+
+const T = {
+  tile: '#1d1d1f',
+  tileDark2: '#272729',
+  bg: '#000000',
+  border: 'rgba(255,255,255,0.08)',
+  ink: '#ffffff',
+  muted: '#cccccc',
+  dim: '#7a7a7a',
+  primary: '#0066cc',
+  success: '#34c759',
+  warning: '#ff9f0a',
+  danger: '#ff453a',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  background: T.bg, border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 11, padding: '9px 14px',
+  color: T.ink, fontSize: 14, letterSpacing: '-0.224px',
+  outline: 'none', fontFamily: 'inherit',
+  transition: 'border-color 0.15s',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 600,
+  color: T.dim, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6,
+};
 
 export const SafetyPage: React.FC = () => {
   const [saeClocks, setSaeClocks] = useState<SaeClock[]>([]);
@@ -52,7 +80,7 @@ export const SafetyPage: React.FC = () => {
         action_taken: actionTaken || 'Investigational medicine withheld; participant placed on clinical monitoring.',
         outcome: 'Under Observation in AIIA Clinical Ward',
       });
-      setNotification('✅ Adverse Event logged! If serious, 24-hour statutory countdown clock is live.');
+      setNotification('✅ Adverse Event logged. If serious, 24-hour statutory countdown clock is now live.');
       setEventTerm('');
       setActionTaken('');
       setShowLogForm(false);
@@ -73,83 +101,121 @@ export const SafetyPage: React.FC = () => {
       a.href = url;
       a.download = `NPvCC_ASUH_Safety_Report_${aeId}.json`;
       a.click();
-    } catch (err) {
+    } catch {
       alert('NPvCC Export failed.');
     }
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Title Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Page header */}
+      <div
+        style={{
+          display: 'flex', flexWrap: 'wrap',
+          justifyContent: 'space-between', alignItems: 'flex-start', gap: 16,
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-[#ff453a]" />
-            Pharmacovigilance & 24-Hour Statutory Safety Center
+          <h1
+            style={{
+              fontSize: 34, fontWeight: 600, color: T.ink,
+              letterSpacing: '-0.374px', lineHeight: 1.1, margin: '0 0 6px',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}
+          >
+            <ShieldAlert size={28} color={T.danger} />
+            Pharmacovigilance &amp; 24-Hour Statutory Safety Center
           </h1>
-          <p className="text-xs text-[#7a7a7a] mt-1">
+          <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', margin: 0 }}>
             Mandatory Adverse Event Following Ayurveda (AEFA) tracking under NDCT Rules 2019 and Ministry of Ayush NPvCC.
           </p>
         </div>
 
         <button
           onClick={() => setShowLogForm(!showLogForm)}
-          className="bg-[#ff453a] hover:bg-[#d73a30] text-white font-normal text-xs px-5 py-2.5 rounded-full transition-all shadow-md active:scale-95 flex items-center gap-2"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: showLogForm ? T.tile : T.danger,
+            color: T.ink, border: showLogForm ? `1px solid ${T.border}` : 'none',
+            borderRadius: 9999, padding: '11px 22px',
+            fontSize: 14, fontWeight: 600, letterSpacing: '-0.224px',
+            cursor: 'pointer', transition: 'transform 0.1s ease',
+            fontFamily: 'inherit', flexShrink: 0,
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          {showLogForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {showLogForm ? <X size={14} /> : <Plus size={14} />}
           {showLogForm ? 'Close Form' : 'Log New Adverse Event'}
         </button>
       </div>
 
+      {/* Notification */}
       {notification && (
-        <div className="p-4 bg-[#1d1d1f] border border-white/10 text-xs font-medium text-[#cccccc] rounded-[14px]">
+        <div
+          style={{
+            padding: '14px 20px', borderRadius: 11,
+            background: T.tile, border: `1px solid ${T.border}`,
+            fontSize: 14, color: T.muted, letterSpacing: '-0.224px',
+          }}
+        >
           {notification}
         </div>
       )}
 
-      {/* NEW ADVERSE EVENT INTAKE FORM */}
+      {/* AE Intake Form */}
       {showLogForm && (
-        <div className="bg-[#1d1d1f] border border-[#ff453a]/40 rounded-[18px] p-6 shadow-xl space-y-4">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#ff453a]" />
+        <div
+          style={{
+            background: T.tile,
+            border: '1px solid rgba(255,69,58,0.35)',
+            borderRadius: 18, padding: 28,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 17, fontWeight: 600, color: T.ink,
+              letterSpacing: '-0.374px', marginBottom: 20,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            <AlertTriangle size={16} color={T.danger} />
             Official NPvCC Adverse Event Intake Form
           </h2>
 
-          <form onSubmit={handleLogAe} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <form
+            onSubmit={handleLogAe}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}
+          >
             <div>
-              <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">
-                Adverse Event / Reaction Term
-              </label>
+              <label style={labelStyle}>Adverse Event / Reaction Term</label>
               <input
-                type="text"
-                value={eventTerm}
+                type="text" value={eventTerm}
                 onChange={(e) => setEventTerm(e.target.value)}
                 placeholder="e.g. Acute Gastric Irritation with Papular Rash"
-                className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc]"
-                required
+                style={inputStyle} required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">Severity</label>
+                <label style={labelStyle}>Severity</label>
                 <select
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
-                  className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
+                  style={{ ...inputStyle, appearance: 'none' }}
                 >
                   <option value="MILD">Mild</option>
                   <option value="MODERATE">Moderate</option>
                   <option value="SEVERE">Severe</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">WHO-UMC Causality</label>
+                <label style={labelStyle}>WHO-UMC Causality</label>
                 <select
                   value={causality}
                   onChange={(e) => setCausality(e.target.value)}
-                  className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white focus:outline-none focus:border-[#0066cc]"
+                  style={{ ...inputStyle, appearance: 'none' }}
                 >
                   <option value="CERTAIN">Certain</option>
                   <option value="PROBABLE">Probable</option>
@@ -160,94 +226,200 @@ export const SafetyPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[#7a7a7a] font-medium uppercase text-[10px] tracking-wider mb-1">
-                Clinical Action Taken
-              </label>
+              <label style={labelStyle}>Clinical Action Taken</label>
               <input
-                type="text"
-                value={actionTaken}
+                type="text" value={actionTaken}
                 onChange={(e) => setActionTaken(e.target.value)}
                 placeholder="e.g. Medicine suspended, antacid and observation"
-                className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-3.5 py-2.5 text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc]"
+                style={inputStyle}
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-4">
-              <label className="flex items-center gap-2 text-white font-medium cursor-pointer">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <label
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  cursor: 'pointer', fontSize: 14, color: T.muted, letterSpacing: '-0.224px',
+                }}
+              >
                 <input
-                  type="checkbox"
-                  checked={isSerious}
+                  type="checkbox" checked={isSerious}
                   onChange={(e) => setIsSerious(e.target.checked)}
-                  className="w-4 h-4 accent-[#ff453a] rounded"
+                  style={{ width: 16, height: 16, accentColor: T.danger }}
                 />
                 Mark as Serious Adverse Event (SAE) — Triggers 24-Hr Clock
               </label>
             </div>
 
-            <div className="md:col-span-2 mt-2">
+            <div style={{ gridColumn: '1 / -1' }}>
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#ff453a] hover:bg-[#d73a30] text-white font-normal py-3 rounded-full transition-all shadow-md active:scale-95 disabled:opacity-50 text-xs"
+                type="submit" disabled={loading}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: T.danger, color: T.ink, border: 'none',
+                  borderRadius: 9999, padding: '11px 22px',
+                  fontSize: 17, fontWeight: 400, letterSpacing: '-0.374px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                  transition: 'transform 0.1s ease', fontFamily: 'inherit',
+                }}
+                onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
+                onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
-                {loading ? 'Submitting & Broadcasting...' : 'Save & Publish to Safety Queue'}
+                {loading ? 'Submitting & Broadcasting…' : 'Save & Publish to Safety Queue'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* ACTIVE SAE EMERGENCY CARDS */}
-      <div className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a] flex items-center gap-2">
-          <Clock className="w-4 h-4 text-[#ff453a]" />
+      {/* Active SAE clocks */}
+      <div>
+        <p
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 11, fontWeight: 600, color: T.dim,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14,
+          }}
+        >
+          <Clock size={13} color={T.danger} />
           Active Statutory 24-Hour Countdown Clocks ({saeClocks.length})
-        </h2>
+        </p>
 
         {saeClocks.length === 0 ? (
-          <div className="bg-[#1d1d1f] border border-white/10 rounded-[18px] p-8 text-center text-[#7a7a7a] text-xs">
-            <CheckCircle2 className="w-8 h-8 text-[#34c759] mx-auto mb-2" />
-            No active Serious Adverse Events. All trials 100% compliant with NDCT safety guidelines.
+          <div
+            style={{
+              background: T.tile, border: `1px solid ${T.border}`,
+              borderRadius: 18, padding: 48, textAlign: 'center',
+            }}
+          >
+            <CheckCircle2 size={32} color={T.success} style={{ margin: '0 auto 10px' }} />
+            <p
+              style={{
+                fontSize: 17, fontWeight: 600, color: T.success,
+                letterSpacing: '-0.374px', marginBottom: 6,
+              }}
+            >
+              All SAE Clocks Clear
+            </p>
+            <p style={{ fontSize: 14, color: T.dim, letterSpacing: '-0.224px', margin: 0 }}>
+              No active Serious Adverse Events. All trials 100% compliant with NDCT safety guidelines.
+            </p>
           </div>
         ) : (
-          saeClocks.map((sae) => (
-            <div
-              key={sae.id}
-              className="bg-[#1d1d1f] border border-[#ff453a]/50 rounded-[18px] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#ff453a] to-[#ff9f0a]" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {saeClocks.map((sae) => (
+              <div
+                key={sae.id}
+                style={{
+                  background: T.tileDark2,
+                  border: '1px solid rgba(255,69,58,0.45)',
+                  borderRadius: 18,
+                  padding: '28px 32px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Top accent bar */}
+                <div
+                  style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                    background: 'linear-gradient(90deg, #ff453a, #ff9f0a)',
+                  }}
+                />
 
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="bg-[#ff453a] text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase animate-pulse">
-                    🚨 24H STATUTORY CLOCK ACTIVE
-                  </span>
-                  <span className="text-xs text-[#cccccc] font-mono">
-                    Participant: <strong className="text-white">{sae.participant_code}</strong>
-                  </span>
-                </div>
-                <h3 className="text-base font-semibold text-white mt-1">{sae.event_term}</h3>
-                <p className="text-xs text-[#7a7a7a]">
-                  Statutory Deadline: <strong className="text-[#ff453a]">{new Date(sae.statutory_24h_deadline).toLocaleString()}</strong>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4 shrink-0">
-                <div className="bg-[#000000] px-4 py-2 rounded-[11px] border border-[#ff453a]/30 text-right">
-                  <span className="text-[10px] text-[#7a7a7a] uppercase block font-semibold">Time Remaining</span>
-                  <span className="text-2xl font-bold text-[#ff453a] font-mono">{sae.status_label}</span>
-                </div>
-
-                <button
-                  onClick={() => downloadNpvcc(sae.id)}
-                  className="bg-[#ff453a] hover:bg-[#d73a30] text-white text-xs font-normal px-5 py-3 rounded-full flex items-center gap-2 transition-all shadow-md active:scale-95"
+                <div
+                  style={{
+                    display: 'flex', flexWrap: 'wrap',
+                    justifyContent: 'space-between', alignItems: 'center', gap: 20,
+                  }}
                 >
-                  <Download className="w-4 h-4" />
-                  NPvCC Report
-                </button>
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <span
+                        style={{
+                          fontSize: 10, fontWeight: 700, color: T.danger,
+                          background: 'rgba(255,69,58,0.12)',
+                          border: '1px solid rgba(255,69,58,0.4)',
+                          padding: '3px 10px', borderRadius: 9999,
+                          letterSpacing: '0.06em', textTransform: 'uppercase',
+                        }}
+                      >
+                        🚨 24H Statutory Clock Active
+                      </span>
+                      <span style={{ fontSize: 12, color: T.dim, fontFamily: 'inherit' }}>
+                        Participant:{' '}
+                        <strong style={{ color: T.ink, fontWeight: 600 }}>
+                          {sae.participant_code}
+                        </strong>
+                      </span>
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: 21, fontWeight: 600, color: T.ink,
+                        letterSpacing: '-0.374px', lineHeight: 1.19, marginBottom: 6,
+                      }}
+                    >
+                      {sae.event_term}
+                    </h3>
+                    <p style={{ fontSize: 14, color: '#ff6961', letterSpacing: '-0.224px', margin: 0 }}>
+                      Statutory Deadline:{' '}
+                      <strong>{new Date(sae.statutory_24h_deadline).toLocaleString()}</strong>
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                    <div
+                      style={{
+                        background: T.bg,
+                        border: '1px solid rgba(255,69,58,0.3)',
+                        borderRadius: 11,
+                        padding: '12px 20px',
+                        textAlign: 'right',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 10, color: T.dim,
+                          display: 'block', textTransform: 'uppercase',
+                          letterSpacing: '0.06em', marginBottom: 4,
+                        }}
+                      >
+                        Time Remaining
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 28, fontWeight: 700,
+                          color: sae.is_overdue ? T.danger : T.warning,
+                          letterSpacing: '-0.374px',
+                          fontFamily: 'SF Mono, ui-monospace, monospace',
+                        }}
+                      >
+                        {sae.status_label}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => downloadNpvcc(sae.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        background: T.danger, color: T.ink, border: 'none',
+                        borderRadius: 9999, padding: '11px 22px',
+                        fontSize: 14, fontWeight: 600, letterSpacing: '-0.224px',
+                        cursor: 'pointer', transition: 'transform 0.1s',
+                        fontFamily: 'inherit',
+                      }}
+                      onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+                      onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                      <Download size={14} />
+                      NPvCC Report
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

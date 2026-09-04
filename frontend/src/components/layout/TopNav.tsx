@@ -1,46 +1,160 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Activity, LogOut, ShieldCheck, User } from 'lucide-react';
+import { Activity, LogOut } from 'lucide-react';
 
 export const TopNav: React.FC = () => {
   const { user, logout } = useAuth();
 
   return (
-    <header className="h-14 bg-[#000000] border-b border-white/10 px-6 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md bg-black/90">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#0066cc] flex items-center justify-center text-white shadow-sm">
-          <Activity className="w-4 h-4" />
+    <header
+      style={{
+        height: 44,
+        background: '#000000',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        backdropFilter: 'saturate(180%) blur(20px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: 24,
+        paddingRight: 24,
+      }}
+    >
+      {/* Brand */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            background: '#0066cc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Activity size={12} color="#fff" />
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-white tracking-[-0.01em]">AyurVedhya CTMS</h2>
-            <span className="text-[10px] font-medium text-[#2997ff] bg-[#0066cc]/15 px-2 py-0.5 rounded-full border border-[#0066cc]/30">
-              GCP Validated
-            </span>
-          </div>
-          <p className="text-[11px] text-[#7a7a7a] tracking-tight">All India Institute of Ayurveda | Ministry of Ayush</p>
-        </div>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#ffffff',
+            letterSpacing: '-0.12px',
+            lineHeight: 1,
+          }}
+        >
+          AyurVedhya CTMS
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 400,
+            color: '#0066cc',
+            background: 'rgba(0,102,204,0.12)',
+            border: '1px solid rgba(0,102,204,0.25)',
+            padding: '2px 9px',
+            borderRadius: 9999,
+            letterSpacing: '-0.08px',
+          }}
+        >
+          AIIA · Ministry of Ayush
+        </span>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* User Badge */}
-        <div className="flex items-center gap-3 bg-[#1d1d1f] border border-white/10 px-3 py-1.5 rounded-full">
-          <div className="w-6 h-6 rounded-full bg-[#0066cc] font-semibold text-[11px] text-white flex items-center justify-center">
-            {user?.avatarLetter || 'U'}
+      {/* Right cluster */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* User pill */}
+        {user && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: '#1d1d1f',
+              border: '1px solid rgba(255,255,255,0.08)',
+              padding: '4px 12px 4px 4px',
+              borderRadius: 9999,
+            }}
+          >
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                background: '#0066cc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#ffffff',
+                flexShrink: 0,
+              }}
+            >
+              {user.avatarLetter}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  letterSpacing: '-0.12px',
+                }}
+              >
+                {user.fullName}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: '#2997ff',
+                  letterSpacing: '-0.08px',
+                  marginTop: 2,
+                }}
+              >
+                {user.roleDisplayName}
+              </span>
+            </div>
           </div>
-          <div className="text-left">
-            <span className="block text-xs font-semibold text-white tracking-tight">{user?.fullName}</span>
-            <span className="block text-[10px] font-medium text-[#2997ff]">{user?.roleDisplayName}</span>
-          </div>
-        </div>
+        )}
 
         {/* Logout */}
         <button
           onClick={logout}
-          className="p-2 bg-[#1d1d1f] hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-[#cccccc] hover:text-red-400 rounded-full transition-all active:scale-95"
           title="Sign Out"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: '#1d1d1f',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#cccccc',
+            transition: 'all 0.15s ease',
+            flexShrink: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,69,58,0.1)';
+            e.currentTarget.style.borderColor = 'rgba(255,69,58,0.3)';
+            e.currentTarget.style.color = '#ff453a';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#1d1d1f';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.color = '#cccccc';
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut size={14} />
         </button>
       </div>
     </header>

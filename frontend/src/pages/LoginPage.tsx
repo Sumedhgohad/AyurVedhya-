@@ -1,7 +1,47 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Shield, Users, Building2, Lock } from 'lucide-react';
+import { Activity, Lock, Users, Shield, Building2 } from 'lucide-react';
+
+const T = {
+  bg: '#000000',
+  tile: '#1d1d1f',
+  tileBorder: 'rgba(255,255,255,0.08)',
+  inkLight: '#ffffff',
+  inkMuted: '#cccccc',
+  inkDim: '#7a7a7a',
+  primary: '#0066cc',
+  primaryFocus: '#0071e3',
+  primaryOnDark: '#2997ff',
+  danger: '#ff453a',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box',
+  background: '#000000',
+  border: `1px solid rgba(255,255,255,0.12)`,
+  borderRadius: 11,
+  padding: '11px 16px',
+  color: '#ffffff',
+  fontSize: 17,
+  fontWeight: 400,
+  lineHeight: 1.47,
+  letterSpacing: '-0.374px',
+  outline: 'none',
+  fontFamily: 'inherit',
+  transition: 'border-color 0.15s ease',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#7a7a7a',
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  marginBottom: 7,
+};
 
 export const LoginPage: React.FC = () => {
   const { login, quickLogin } = useAuth();
@@ -10,6 +50,8 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailFocus, setEmailFocus] = useState(false);
+  const [passwordFocus, setPasswordFocus] = useState(false);
 
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,99 +71,262 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white flex flex-col justify-center items-center px-4 relative overflow-hidden font-sans">
-      {/* Background Soft Glow - verge.md minimal drop glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#0066cc]/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Main Login Tile Card */}
-      <div className="w-full max-w-md bg-[#1d1d1f] border border-white/10 rounded-[18px] p-8 shadow-2xl relative z-10">
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-[#0066cc] rounded-full text-white shadow-lg shadow-[#0066cc]/30 mb-2">
-            <Activity className="w-7 h-7" />
+    <div
+      style={{
+        minHeight: '100vh',
+        background: T.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 16px',
+        fontFamily:
+          "'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        WebkitFontSmoothing: 'antialiased',
+      }}
+    >
+      {/* Card */}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          background: T.tile,
+          border: `1px solid ${T.tileBorder}`,
+          borderRadius: 18,
+          padding: 40,
+          boxShadow: 'rgba(0,0,0,0.22) 3px 5px 30px 0',
+        }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              background: T.primary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              boxShadow: '0 4px 16px rgba(0,102,204,0.3)',
+            }}
+          >
+            <Activity size={24} color="#fff" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-white">AyurVedhya CTMS</h1>
-          <p className="text-xs text-[#7a7a7a]">All India Institute of Ayurveda | Ministry of Ayush</p>
-          <div className="inline-block bg-[#000000] border border-white/10 text-[11px] text-[#2997ff] px-3 py-1 rounded-full font-medium mt-1">
-            GCP & NDCT 2019 Regulatory Portal
-          </div>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 600,
+              color: T.inkLight,
+              letterSpacing: '-0.28px',
+              lineHeight: 1.1,
+              margin: '0 0 8px',
+            }}
+          >
+            AyurVedhya CTMS
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: T.inkDim,
+              letterSpacing: '-0.224px',
+              margin: '0 0 12px',
+            }}
+          >
+            All India Institute of Ayurveda · Ministry of Ayush
+          </p>
+          <span
+            style={{
+              display: 'inline-block',
+              fontSize: 11,
+              fontWeight: 400,
+              color: T.primaryOnDark,
+              background: 'rgba(0,102,204,0.1)',
+              border: '1px solid rgba(0,102,204,0.25)',
+              padding: '3px 12px',
+              borderRadius: 9999,
+              letterSpacing: '-0.08px',
+            }}
+          >
+            GCP &amp; NDCT 2019 Regulatory Portal
+          </span>
         </div>
 
+        {/* Error */}
         {error && (
-          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-[11px] text-xs text-[#ff453a] font-medium text-center">
+          <div
+            style={{
+              background: 'rgba(255,69,58,0.08)',
+              border: '1px solid rgba(255,69,58,0.3)',
+              borderRadius: 11,
+              padding: '11px 16px',
+              fontSize: 14,
+              color: T.danger,
+              letterSpacing: '-0.224px',
+              marginBottom: 20,
+              textAlign: 'center',
+            }}
+          >
             {error}
           </div>
         )}
 
-        {/* Manual Credentials Form */}
-        <form onSubmit={handleManualLogin} className="mt-6 space-y-4 text-xs">
+        {/* Login Form */}
+        <form onSubmit={handleManualLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <label className="block text-[#7a7a7a] font-medium mb-1.5 uppercase text-[10px] tracking-wider">Official Ayush Email</label>
+            <label style={labelStyle}>Official Ayush Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. investigator@aiia.gov.in"
-              className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-4 py-3 text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc] transition-colors text-sm"
+              placeholder="investigator@aiia.gov.in"
+              style={{
+                ...inputStyle,
+                borderColor: emailFocus ? T.primaryFocus : 'rgba(255,255,255,0.12)',
+              }}
+              onFocus={() => setEmailFocus(true)}
+              onBlur={() => setEmailFocus(false)}
               required
             />
           </div>
 
           <div>
-            <label className="block text-[#7a7a7a] font-medium mb-1.5 uppercase text-[10px] tracking-wider">Password</label>
+            <label style={labelStyle}>Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-[#000000] border border-white/10 rounded-[11px] px-4 py-3 text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#0066cc] transition-colors text-sm"
+              style={{
+                ...inputStyle,
+                borderColor: passwordFocus ? T.primaryFocus : 'rgba(255,255,255,0.12)',
+              }}
+              onFocus={() => setPasswordFocus(true)}
+              onBlur={() => setPasswordFocus(false)}
               required
             />
           </div>
 
-          {/* Primary Action Blue Pill Button per verge.md */}
+          {/* Primary CTA — pill button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#0066cc] hover:bg-[#0052a3] text-white font-normal py-3.5 rounded-full transition-all shadow-lg shadow-[#0066cc]/25 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 text-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              background: T.primary,
+              color: '#ffffff',
+              fontSize: 17,
+              fontWeight: 400,
+              letterSpacing: '-0.374px',
+              padding: '11px 22px',
+              borderRadius: 9999,
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1,
+              transition: 'transform 0.1s ease',
+              fontFamily: 'inherit',
+              width: '100%',
+              marginTop: 4,
+            }}
+            onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <Lock className="w-4 h-4" />
-            {loading ? 'Authenticating...' : 'Sign In via Keycloak IAM'}
+            <Lock size={16} />
+            {loading ? 'Authenticating…' : 'Sign In via Keycloak IAM'}
           </button>
         </form>
 
-        {/* Quick Persona Access for Judges / Evaluation */}
-        <div className="mt-8 pt-6 border-t border-white/10">
-          <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#7a7a7a] text-center mb-3">
-            Quick Persona Login (Evaluation Mode)
-          </span>
+        {/* Quick persona access */}
+        <div
+          style={{
+            marginTop: 32,
+            paddingTop: 24,
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <p
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: '#7a7a7a',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              marginBottom: 14,
+            }}
+          >
+            Quick Persona Login · Evaluation Mode
+          </p>
 
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleQuick('PI')}
-              className="p-3 bg-[#000000] hover:bg-white/5 border border-white/10 hover:border-[#2997ff]/50 rounded-[14px] text-center group transition-all active:scale-95"
-            >
-              <Users className="w-4 h-4 text-[#2997ff] mx-auto mb-1 group-hover:scale-110 transition-transform" />
-              <span className="block text-[11px] font-medium text-[#cccccc]">Investigator</span>
-            </button>
-
-            <button
-              onClick={() => handleQuick('SAFETY')}
-              className="p-3 bg-[#000000] hover:bg-white/5 border border-white/10 hover:border-purple-500/50 rounded-[14px] text-center group transition-all active:scale-95"
-            >
-              <Shield className="w-4 h-4 text-[#bf5af2] mx-auto mb-1 group-hover:scale-110 transition-transform" />
-              <span className="block text-[11px] font-medium text-[#cccccc]">Safety / IEC</span>
-            </button>
-
-            <button
-              onClick={() => handleQuick('DIRECTOR')}
-              className="p-3 bg-[#000000] hover:bg-white/5 border border-white/10 hover:border-[#34c759]/50 rounded-[14px] text-center group transition-all active:scale-95"
-            >
-              <Building2 className="w-4 h-4 text-[#34c759] mx-auto mb-1 group-hover:scale-110 transition-transform" />
-              <span className="block text-[11px] font-medium text-[#cccccc]">Leadership</span>
-            </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            {[
+              { role: 'PI' as const, icon: Users, label: 'Investigator', color: T.primaryOnDark },
+              { role: 'SAFETY' as const, icon: Shield, label: 'Safety / IEC', color: '#bf5af2' },
+              { role: 'DIRECTOR' as const, icon: Building2, label: 'Leadership', color: '#34c759' },
+            ].map(({ role, icon: Icon, label, color }) => (
+              <button
+                key={role}
+                onClick={() => handleQuick(role)}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '14px 8px',
+                  background: '#000000',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 14,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget.style.borderColor = `${color}50`);
+                  (e.currentTarget.style.background = 'rgba(255,255,255,0.03)');
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)');
+                  (e.currentTarget.style.background = '#000000');
+                }}
+                onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+                onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                <Icon size={16} color={color} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: T.inkMuted,
+                    letterSpacing: '-0.08px',
+                    lineHeight: 1.2,
+                    textAlign: 'center',
+                  }}
+                >
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Fine-print footer */}
+      <p
+        style={{
+          marginTop: 24,
+          fontSize: 12,
+          color: '#7a7a7a',
+          letterSpacing: '-0.12px',
+          textAlign: 'center',
+        }}
+      >
+        Secured by Keycloak IAM · ISO 27001 · GCP Validated
+      </p>
     </div>
   );
 };

@@ -2,19 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { Study } from '../types';
 import {
-  Users, UserPlus, FileCheck, Stethoscope,
-  Upload, CheckCircle2, Pill, FileText, AlertTriangle,
+  Users,
+  UserPlus,
+  FileCheck,
+  Stethoscope,
+  Upload,
+  CheckCircle2,
+  Lock,
+  FolderKanban,
+  FileText,
+  Pill,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import {
-  CANVAS, PARCHMENT, HAIRLINE, INK, INK_48, INK_80,
+  CANVAS, PARCHMENT, PEARL, HAIRLINE, INK, INK_48, INK_80,
   PRIMARY, PRIMARY_FOCUS, PRIMARY_ON_DARK,
   SUCCESS, WARNING, DANGER, PURPLE,
   FONT_STACK, FONT_MONO,
   R_MD, R_LG, R_PILL,
-  TYPE, BADGE, btnPrimary, inputField, labelOverline,
+  TYPE, BADGE
 } from '../design';
 
-/* ─────────────────── Types ─────────────────── */
 interface ParticipantRecord {
   id: string;
   participant_code: string;
@@ -22,244 +31,255 @@ interface ParticipantRecord {
   gender: string;
   enrollment_date: string;
   status: string;
-  consent?: { consent_type: string; language_code: string; consent_timestamp: string };
+  consent?: {
+    consent_type: string;
+    language_code: string;
+    consent_timestamp: string;
+  };
   visits?: Array<{
     visit_number: number;
     visit_type: string;
     prakriti_assessment: string;
     pathya_apathya_diet_score: number;
     namaste_terminology_code: string;
+    dispensed_batch_no?: string;
     modern_vitals_and_labs?: any;
   }>;
 }
 
-const NAMASTE = [
+const NAMASTE_DIAGNOSES = [
   { term: 'Tamaka Shwasa (Bronchial Asthma / Respiratory Distress)', code: 'NAMASTE_AYU_0842', icd11: 'CA23' },
-  { term: 'Kasa (Chronic Productive Cough / Bronchitis)',             code: 'NAMASTE_AYU_0411', icd11: 'MD21' },
-  { term: 'Chittodvega (Generalized Anxiety Disorder)',               code: 'NAMASTE_AYU_0194', icd11: '6B00' },
-  { term: 'Amavata (Rheumatoid Arthritis / Joint Inflammation)',      code: 'NAMASTE_AYU_0302', icd11: 'FA20' },
-  { term: 'Prameha / Madhumeha (Type-2 Diabetes Mellitus)',           code: 'NAMASTE_AYU_0621', icd11: '5A11' },
+  { term: 'Kasa (Chronic Productive Cough / Bronchitis)', code: 'NAMASTE_AYU_0411', icd11: 'MD21' },
+  { term: 'Chittodvega (Generalized Anxiety Disorder / Mental Stress)', code: 'NAMASTE_AYU_0194', icd11: '6B00' },
+  { term: 'Amavata (Rheumatoid Arthritis / Joint Inflammation)', code: 'NAMASTE_AYU_0302', icd11: 'FA20' },
+  { term: 'Prameha / Madhumeha (Type-2 Diabetes Mellitus)', code: 'NAMASTE_AYU_0621', icd11: '5A11' }
 ];
 
-/* ─────────────────── Shared sub-components ─────────────────── */
-
-/** Section card wrapper */
-const Section: React.FC<{
-  icon: React.ReactNode;
-  title: string;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-  accent?: string;
-}> = ({ icon, title, badge, children, accent = PRIMARY }) => (
-  <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, overflow: 'hidden' }}>
-    {/* Section header strip */}
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '14px 24px',
-      borderBottom: `1px solid ${HAIRLINE}`,
-      background: PARCHMENT,
-    }}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 600, color: accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        {icon} {title}
-      </span>
-      {badge}
-    </div>
-    <div style={{ padding: 24 }}>
-      {children}
-    </div>
-  </div>
-);
-
-/** Input with label — the verge.md form field pattern */
-const Field: React.FC<{
-  label: string;
-  children: React.ReactNode;
-  hint?: string;
-  col?: number; /* grid column span */
-}> = ({ label, children, hint }) => (
-  <div>
-    <label style={labelOverline()}>{label}</label>
-    {children}
-    {hint && <span style={{ display: 'block', fontSize: 11, color: INK_48, marginTop: 4, letterSpacing: '-0.08px' }}>{hint}</span>}
-  </div>
-);
-
-const IS: React.CSSProperties = inputField(false); // base input style
-
-/* ─────────────────── Main component ─────────────────── */
 export const ParticipantsPage: React.FC = () => {
-  const [studies, setStudies]           = useState<Study[]>([]);
+  const [studies, setStudies] = useState<Study[]>([]);
+  const [selectedStudyId, setSelectedStudyId] = useState<string>('');
   const [participants, setParticipants] = useState<ParticipantRecord[]>([]);
-  const [loading, setLoading]           = useState(false);
-  const [tab, setTab]                   = useState<'ENROLL' | 'LIST'>('ENROLL');
-  const [note, setNote]                 = useState<{ msg: string; ok: boolean } | null>(null);
-  const [consentValidation, setConsentValidation] = useState<{ valid: boolean; msg: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ENROLL' | 'LIST'>('ENROLL');
+  const [notification, setNotification] = useState<string | null>(null);
 
-  // ── Step 1: Demographics ──
-  const [age, setAge]             = useState('');
-  const [gender, setGender]       = useState('');
-  const [heightCm, setHeight]     = useState('');
-  const [weightKg, setWeight]     = useState('');
-  const [opd, setOpd]             = useState('');
-  const [consentFile, setCF]      = useState<File | null>(null);
-  const [inclusion, setInclusion] = useState(false);
+  // FORM 1: SUBJECT SCREENING & DEMOGRAPHICS (Default values removed except opdNumber)
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [weightKg, setWeightKg] = useState('');
+  const [opdNumber, setOpdNumber] = useState('OPD-2026-9481'); // Retained OPD reg number as instructed
+  const [consentFile, setConsentFile] = useState<File | null>(null);
+  const [inclusionChecked, setInclusionChecked] = useState(false);
 
-  // ── Step 2: Clinical CRF ──
-  const [sysBP, setSysBP]       = useState('');
-  const [diaBP, setDiaBP]       = useState('');
-  const [pulse, setPulse]       = useState('');
-  const [diagnosis, setDx]      = useState(NAMASTE[0]);
+  // FORM 2: CLINICAL VITALS & AYURVEDA CRF (Default values removed)
+  const [systolicBp, setSystolicBp] = useState('');
+  const [diastolicBp, setDiastolicBp] = useState('');
+  const [pulseRate, setPulseRate] = useState('');
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState(NAMASTE_DIAGNOSES[0]);
   const [prakriti, setPrakriti] = useState('');
 
-  // ── Diet checklist ──
-  const [diet, setDiet] = useState({
-    aharaTiming:       false,
-    apathyaAvoided:    false,
-    dinacharyaFollowed:false,
-    herbalAnupana:     false,
+  // STRUCTURED DIET & LIFESTYLE CHECKLIST
+  const [dietChecklist, setDietChecklist] = useState({
+    aharaTiming: false,
+    apathyaAvoided: false,
+    dinacharyaFollowed: false,
+    herbalAnupana: false
   });
 
-  // ── Derived ──
-  const bmi          = (Number(weightKg) && Number(heightCm)) 
-    ? (Number(weightKg) / ((Number(heightCm) / 100) ** 2)).toFixed(1) 
-    : '0.0';
-  const dietScore    = Object.values(diet).filter(Boolean).length * 25;
-  const study        = studies[0];
-  const batch        = study?.ip_batches?.[0];
-  const nextCode     = `SUBJ-AIIA-${String(participants.length + 1).padStart(3, '0')}`;
+  const currentStudy = studies.find((s) => s.id === selectedStudyId) || studies[0];
+  const currentBatch = currentStudy?.ip_batches?.[0];
+  const isEnrollingUnlocked = currentStudy?.status === 'ENROLLING' || currentStudy?.status === 'ONGOING';
 
-  const loadData = async () => {
+  // Safe Auto-calculated BMI
+  const numH = Number(heightCm);
+  const numW = Number(weightKg);
+  const bmi = (numH >= 50 && numW >= 20) ? (numW / ((numH / 100) ** 2)).toFixed(1) : '--';
+
+  // Auto-calculated Diet Score
+  const calculatedDietScore = Object.values(dietChecklist).filter(Boolean).length * 25;
+
+  // Auto-generated Next Subject Code
+  const studyPrefix = currentStudy?.short_code?.split('-')[1] || 'AIIA';
+  const nextSubjectCode = `SUBJ-${studyPrefix}-00${participants.length + 1}`;
+
+  const loadData = async (studyIdToLoad?: string) => {
     try {
-      const sRes = await api.get('/study/list');
-      setStudies(sRes.data);
-      if (sRes.data[0]) {
-        const pRes = await api.get(`/clinical/participants/study/${sRes.data[0].id}`);
+      const studyRes = await api.get('/study/list');
+      setStudies(studyRes.data);
+
+      const targetId = studyIdToLoad || selectedStudyId || studyRes.data[0]?.id;
+      if (targetId) {
+        setSelectedStudyId(targetId);
+        const pRes = await api.get(`/clinical/participants/study/${targetId}`);
         setParticipants(pRes.data);
       }
-    } catch (err) { console.error(err); }
-  };
-
-  useEffect(() => { loadData(); }, []);
-
-  const validateConsentFile = async (file: File) => {
-    if (!study) return;
-    
-    setConsentValidation({ valid: false, msg: 'Validating consent document...' });
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('study_id', study.id);
-      formData.append('document_type', 'SIGNED_INFORMED_CONSENT');
-      formData.append('uploaded_by', 'investigator@aiia.gov.in');
-      
-      await api.post('/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      
-      setConsentValidation({ valid: true, msg: '✅ Valid consent document detected' });
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Validation failed';
-      setConsentValidation({ valid: false, msg: `❌ ${errorMsg}` });
-      setCF(null); // Clear invalid file
+    } catch (err) {
+      console.error('Error loading participants', err);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleStudyChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newId = e.target.value;
+    setSelectedStudyId(newId);
+    setLoading(true);
+    try {
+      const pRes = await api.get(`/clinical/participants/study/${newId}`);
+      setParticipants(pRes.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logical Validation Function
+  const validateInputs = (): string | null => {
+    const numAge = Number(age);
+    if (!age || isNaN(numAge) || numAge < 18 || numAge > 95) {
+      return 'Age must be a valid number between 18 and 95 years.';
+    }
+
+    if (!gender) {
+      return 'Please select a Gender for the subject.';
+    }
+
+    if (!heightCm || isNaN(numH) || numH < 50 || numH > 250) {
+      return 'Height must be between 50 cm and 250 cm.';
+    }
+
+    if (!weightKg || isNaN(numW) || numW < 20 || numW > 250) {
+      return 'Weight must be between 20 kg and 250 kg.';
+    }
+
+    const numSys = Number(systolicBp);
+    if (!systolicBp || isNaN(numSys) || numSys < 60 || numSys > 250) {
+      return 'Systolic Blood Pressure must be between 60 and 250 mmHg.';
+    }
+
+    const numDia = Number(diastolicBp);
+    if (!diastolicBp || isNaN(numDia) || numDia < 40 || numDia > 150) {
+      return 'Diastolic Blood Pressure must be between 40 and 150 mmHg.';
+    }
+
+    if (numSys <= numDia) {
+      return 'Systolic BP must be greater than Diastolic BP.';
+    }
+
+    const numPulse = Number(pulseRate);
+    if (!pulseRate || isNaN(numPulse) || numPulse < 40 || numPulse > 220) {
+      return 'Resting Pulse Rate must be between 40 and 220 bpm.';
+    }
+
+    if (!prakriti) {
+      return 'Please select an Ayurvedic Prakriti Assessment.';
+    }
+
+    return null;
+  };
+
+  const handleEnrollmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!study) return;
-    if (!inclusion) { alert('Cannot enroll: Subject must meet all inclusion/exclusion criteria.'); return; }
-    
-    // Check if consent file is present but not validated
-    if (consentFile && (!consentValidation || !consentValidation.valid)) {
-      setNote({ msg: 'Please upload a valid consent document before enrolling', ok: false });
+    if (!currentStudy) return;
+
+    if (!isEnrollingUnlocked) {
+      alert(`LEGAL GUARD: Cannot enroll! Study '${currentStudy.short_code}' is in '${currentStudy.status}' status. It must have IEC Approval and CTRI Registration first.`);
       return;
     }
-    
-    setLoading(true); setNote(null);
+
+    const validationError = validateInputs();
+    if (validationError) {
+      setNotification(`❌ Validation Error: ${validationError}`);
+      return;
+    }
+
+    if (!inclusionChecked) {
+      alert('Cannot enroll: Subject must meet all protocol Inclusion and Exclusion criteria.');
+      return;
+    }
+
+    setLoading(true);
+    setNotification(null);
 
     try {
-      // 1. Consent file already validated during file selection, skip re-upload
-      // 2. Enroll the participant
-      const pRes = await api.post('/clinical/participants/enroll', {
-        study_id: study.id,
-        participant_code: nextCode,
-        age: Number(age), gender,
+      // 1. If consent file attached, upload FIRST
+      if (consentFile) {
+        const formData = new FormData();
+        formData.append('file', consentFile);
+        formData.append('study_id', currentStudy.id);
+        formData.append('document_type', 'SIGNED_INFORMED_CONSENT');
+        formData.append('uploaded_by', 'investigator@aiia.gov.in');
+        await api.post('/documents/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      // 2. Enroll Participant with Auto-Generated ID
+      const patientRes = await api.post('/clinical/participants/enroll', {
+        study_id: currentStudy.id,
+        participant_code: nextSubjectCode,
+        age: Number(age),
+        gender,
         enrollment_date: new Date().toISOString().split('T')[0],
         consent_type: 'WRITTEN',
         language_code: 'hi',
         witness_name: 'Dr. Clinical Coordinator',
       });
 
+      // 3. Record Baseline Hybrid CRF & Auto-Decrement Medicine Batch
       await api.post('/clinical/visits/record', {
-        participant_id: pRes.data.id,
-        visit_number: 1, visit_type: 'BASELINE',
+        participant_id: patientRes.data.id,
+        visit_number: 1,
+        visit_type: 'BASELINE',
         visit_date: new Date().toISOString().split('T')[0],
         prakriti_assessment: prakriti,
-        nidan_panchaka_findings: `Primary Diagnosis: ${diagnosis.term}. Hetu: Vata-Pitta vitiating lifestyle.`,
-        pathya_apathya_diet_score: dietScore,
-        namaste_terminology_code: diagnosis.code,
-        dispensed_batch_no: batch?.batch_no || 'ASH-2026-B1',
+        nidan_panchaka_findings: `Primary Diagnosis: ${selectedDiagnosis.term}. Vata-Pitta Hetu noted.`,
+        pathya_apathya_diet_score: calculatedDietScore,
+        namaste_terminology_code: selectedDiagnosis.code,
+        dispensed_batch_no: currentBatch?.batch_no || 'ASH-2026-B1',
         quantity_dispensed: 60,
         modern_vitals_and_labs: {
-          opd_registration_no: opd,
-          blood_pressure: `${sysBP}/${diaBP} mmHg`,
-          pulse_rate: Number(pulse),
+          opd_registration_no: opdNumber,
+          blood_pressure: `${systolicBp}/${diastolicBp} mmHg`,
+          pulse_rate: Number(pulseRate),
           height_cm: Number(heightCm),
           weight_kg: Number(weightKg),
           bmi: Number(bmi),
-          icd11_code: diagnosis.icd11,
+          icd11_code: selectedDiagnosis.icd11
         },
       });
 
-      setNote({ msg: `${nextCode} enrolled successfully. Baseline CRF saved, 60 units dispensed from Batch ${batch?.batch_no}.`, ok: true });
-      setCF(null);
-      setConsentValidation(null);
-      loadData();
-      setTab('LIST');
+      setNotification(`✅ Successfully enrolled ${nextSubjectCode} into '${currentStudy.short_code}'! Baseline CRF saved and stock updated.`);
+      setConsentFile(null);
+      // Reset form values after successful submission
+      setAge('');
+      setGender('');
+      setHeightCm('');
+      setWeightKg('');
+      setSystolicBp('');
+      setDiastolicBp('');
+      setPulseRate('');
+      setPrakriti('');
+      setInclusionChecked(false);
+      setDietChecklist({ aharaTiming: false, apathyaAvoided: false, dinacharyaFollowed: false, herbalAnupana: false });
+
+      loadData(currentStudy.id);
+      setActiveTab('LIST');
     } catch (err: any) {
-      setNote({ msg: `Error: ${err.response?.data?.message || err.message}`, ok: false });
-    } finally { setLoading(false); }
+      setNotification(`❌ Error: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  /* ───── Tab button style ───── */
-  const tabBtn = (active: boolean, color: string): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 7,
-    padding: '8px 18px', borderRadius: R_PILL,
-    fontSize: 13, fontWeight: 600, letterSpacing: '-0.12px',
-    cursor: 'pointer', border: 'none',
-    background: active ? color : 'transparent',
-    color: active ? '#ffffff' : INK_48,
-    transition: 'all 0.12s ease', fontFamily: FONT_STACK,
-  });
-
-  /* ───── Checklist item ───── */
-  const CheckItem: React.FC<{ label: string; checked: boolean; onChange: (v: boolean) => void }> = ({ label, checked, onChange }) => (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: INK_80, letterSpacing: '-0.12px', lineHeight: 1.4 }}>
-      <span style={{
-        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-        border: `1.5px solid ${checked ? SUCCESS : HAIRLINE}`,
-        background: checked ? SUCCESS : CANVAS,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.12s ease', cursor: 'pointer',
-      }}
-        onClick={() => onChange(!checked)}
-      >
-        {checked && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </span>
-      {label}
-    </label>
-  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, fontFamily: FONT_STACK }}>
-
-      {/* ── Page header + tab switcher ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+      {/* HEADER WITH TABS */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14 }}>
         <div>
           <h1 style={{ fontSize: 34, fontWeight: 600, color: INK, letterSpacing: '-0.374px', lineHeight: 1.47, margin: '0 0 6px' }}>
             Subject Enrollment &amp; Hybrid Clinical CRFs
@@ -269,303 +289,460 @@ export const ParticipantsPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab switcher — pill container */}
-        <div style={{ display: 'flex', alignItems: 'center', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_PILL, padding: 4, gap: 2 }}>
-          <button style={tabBtn(tab === 'ENROLL', PRIMARY)} onClick={() => setTab('ENROLL')}>
-            <UserPlus size={13} /> Enroll New Subject
+        {/* Tab switcher */}
+        <div style={{ background: PARCHMENT, border: `1px solid ${HAIRLINE}`, padding: 4, borderRadius: R_PILL, display: 'flex', gap: 4 }}>
+          <button
+            onClick={() => setActiveTab('ENROLL')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: activeTab === 'ENROLL' ? PRIMARY : 'transparent',
+              color: activeTab === 'ENROLL' ? '#ffffff' : INK_80,
+              border: 'none', borderRadius: R_PILL, padding: '8px 18px',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease'
+            }}
+          >
+            <UserPlus size={15} />
+            Enroll New Subject
           </button>
-          <button style={tabBtn(tab === 'LIST', SUCCESS)} onClick={() => setTab('LIST')}>
-            <FileText size={13} /> Enrolled Cohort ({participants.length})
+          <button
+            onClick={() => setActiveTab('LIST')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: activeTab === 'LIST' ? SUCCESS : 'transparent',
+              color: activeTab === 'LIST' ? '#ffffff' : INK_80,
+              border: 'none', borderRadius: R_PILL, padding: '8px 18px',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease'
+            }}
+          >
+            <FileText size={15} />
+            Study Cohort ({participants.length})
           </button>
         </div>
       </div>
 
-      {/* ── Notification ── */}
-      {note && (
+      {notification && (
         <div style={{
-          padding: '13px 18px', borderRadius: R_MD,
-          border: `1px solid ${note.ok ? 'rgba(52,199,89,0.30)' : 'rgba(255,69,58,0.30)'}`,
-          background: note.ok ? 'rgba(52,199,89,0.06)' : 'rgba(255,69,58,0.06)',
-          fontSize: 14, color: note.ok ? SUCCESS : DANGER, letterSpacing: '-0.224px',
-          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 18px',
+          background: notification.startsWith('❌') ? '#fff0f0' : '#eef6ff',
+          border: `1px solid ${notification.startsWith('❌') ? DANGER : PRIMARY}`,
+          borderRadius: R_MD, fontSize: 13, fontWeight: 600,
+          color: notification.startsWith('❌') ? DANGER : PRIMARY,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-          {note.ok ? <CheckCircle2 size={16} style={{ flexShrink: 0 }} /> : <AlertTriangle size={16} style={{ flexShrink: 0 }} />}
-          {note.msg}
+          <span>{notification}</span>
+          <button onClick={() => setNotification(null)} style={{ background: 'none', border: 'none', color: INK_48, cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
       )}
 
-      {/* ══════════════════════════════
-          TAB 1 — ENROLLMENT FORM
-          ══════════════════════════════ */}
-      {tab === 'ENROLL' && (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* TRIAL SELECTOR BANNER */}
+      <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, padding: 20, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 280 }}>
+          <div style={{ padding: 10, background: '#eef6ff', border: `1px solid ${PRIMARY}`, borderRadius: R_MD, color: PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FolderKanban size={20} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ ...TYPE.label, color: INK_48, display: 'block', marginBottom: 4 }}>
+              Select Active Clinical Trial Protocol
+            </label>
+            <select
+              value={selectedStudyId}
+              onChange={handleStudyChange}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD,
+                padding: '9px 14px', color: INK, fontSize: 14, fontWeight: 600, outline: 'none'
+              }}
+            >
+              {studies.map((s) => (
+                <option key={s.id} value={s.id}>
+                  [{s.short_code}] {s.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-          {/* ── SECTION 1: Demographics ── */}
-          <Section
-            icon={<FileCheck size={12} />}
-            title="Section 1 — Subject Eligibility & Baseline Demographics"
-            badge={
-              <span style={{
-                fontFamily: FONT_MONO, fontSize: 11, fontWeight: 700,
-                color: PRIMARY, background: 'rgba(0,102,204,0.08)',
-                border: `1px solid rgba(0,102,204,0.22)`,
-                padding: '3px 12px', borderRadius: R_PILL, letterSpacing: '0.04em',
-              }}>
-                Auto-ID: {nextCode}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ ...TYPE.label, color: INK_48, display: 'block' }}>Trial Status</span>
+            <span style={isEnrollingUnlocked ? BADGE.green : BADGE.amber}>
+              {currentStudy?.status || 'LOADING...'}
+            </span>
+          </div>
+
+          <div style={{ textAlign: 'right', borderLeft: `1px solid ${HAIRLINE}`, paddingLeft: 16 }}>
+            <span style={{ ...TYPE.label, color: INK_48, display: 'block' }}>CTRI ID</span>
+            <span style={{ fontFamily: FONT_MONO, fontSize: 13, fontWeight: 600, color: PRIMARY }}>
+              {currentStudy?.ctri_registration?.ctri_id || 'PENDING'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* GUARDED WARNING BANNER IF STUDY IS NOT ENROLLING */}
+      {!isEnrollingUnlocked && (
+        <div style={{
+          padding: 16, background: '#fff8e6', border: `1px solid ${WARNING}`,
+          borderRadius: R_LG, fontSize: 13, color: '#8a5300',
+          display: 'flex', alignItems: 'flex-start', gap: 12, lineHeight: 1.4
+        }}>
+          <Lock size={18} color={WARNING} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong>LEGAL GUARD ACTIVE:</strong> Patient enrollment for <strong>{currentStudy?.short_code}</strong> is currently locked because it is in <strong>{currentStudy?.status}</strong> state. Under ICMR &amp; NDCT Rules 2019, patient enrollment cannot begin until Institutional Ethics Committee (IEC) clearance and prospective CTRI registration are verified in the <strong>Trial Protocols</strong> tab.
+          </div>
+        </div>
+      )}
+
+      {/* TAB 1: ENROLLMENT FORM */}
+      {activeTab === 'ENROLL' && (
+        <form onSubmit={handleEnrollmentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* SECTION 1: AUTO-IDENTIFIERS & DEMOGRAPHICS */}
+          <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, overflow: 'hidden' }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '14px 24px', background: PARCHMENT, borderBottom: `1px solid ${HAIRLINE}`
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, ...TYPE.label, color: PRIMARY }}>
+                <FileCheck size={16} />
+                Section 1: Subject Eligibility &amp; Baseline Demographics
               </span>
-            }
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <span style={BADGE.blue}>
+                Auto-Assigned ID: {nextSubjectCode}
+              </span>
+            </div>
 
-              {/* Row 1: 4 columns */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 140px 1fr', gap: 16 }}>
-                <Field label="Hospital OPD / IPD Registration Number">
-                  <input type="text" placeholder="OPD/IPD Number" value={opd} onChange={e => setOpd(e.target.value)} style={IS} required />
-                </Field>
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Hospital OPD/IPD Reg. Number
+                  </label>
+                  <input
+                    type="text"
+                    value={opdNumber}
+                    onChange={(e) => setOpdNumber(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 14px', color: INK, fontSize: 14, outline: 'none' }}
+                    required
+                  />
+                </div>
 
-                <Field label="Age (Years)">
-                  <input type="number" placeholder="Age" value={age} min="18" max="70" onChange={e => setAge(e.target.value)} style={IS} required />
-                </Field>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Age (Years) <span style={{ color: DANGER }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    min="18"
+                    max="95"
+                    placeholder="e.g. 38 (18-95)"
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 14px', color: INK, fontSize: 14, outline: 'none' }}
+                    required
+                  />
+                  <span style={{ fontSize: 11, color: INK_48, marginTop: 4, display: 'block' }}>Range: 18 – 95 years</span>
+                </div>
 
-                <Field label="Gender">
-                  <select value={gender} onChange={e => setGender(e.target.value)} style={{ ...IS, appearance: 'none' }}>
-                    <option value="">Select gender</option>
-                    {['Female', 'Male', 'Other'].map(v => <option key={v}>{v}</option>)}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Gender <span style={{ color: DANGER }}>*</span>
+                  </label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 14px', color: gender ? INK : INK_48, fontSize: 14, outline: 'none' }}
+                    required
+                  >
+                    <option value="">-- Select Gender --</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Other">Other</option>
                   </select>
-                </Field>
+                </div>
 
-                <Field label="Height (cm) / Weight (kg) — BMI Auto-Calculated" hint={`Calculated BMI: ${bmi} kg/m²`}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Height &amp; Weight (BMI) <span style={{ color: DANGER }}>*</span>
+                  </label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="number" placeholder="Height" value={heightCm} onChange={e => setHeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
-                    <input type="number" placeholder="Weight" value={weightKg} onChange={e => setWeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
+                    <input
+                      type="number"
+                      placeholder="Height (cm)"
+                      value={heightCm}
+                      onChange={(e) => setHeightCm(e.target.value)}
+                      min="50"
+                      max="250"
+                      style={{ width: '50%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 10px', color: INK, fontSize: 14, textAlign: 'center', outline: 'none' }}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Weight (kg)"
+                      value={weightKg}
+                      onChange={(e) => setWeightKg(e.target.value)}
+                      min="20"
+                      max="250"
+                      style={{ width: '50%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 10px', color: INK, fontSize: 14, textAlign: 'center', outline: 'none' }}
+                      required
+                    />
                   </div>
-                </Field>
+                  <span style={{ fontSize: 11, color: INK_48, marginTop: 4, display: 'block' }}>
+                    BMI: <strong style={{ color: bmi === '--' ? INK_48 : INK }}>{bmi} kg/m²</strong> (Height: 50-250cm, Weight: 20-250kg)
+                  </span>
+                </div>
               </div>
 
-              {/* Row 2: consent upload + I/E criteria */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, paddingTop: 16, borderTop: `1px solid ${HAIRLINE}` }}>
-                <Field label="Upload Signed Informed Consent Form (PDF / Image)">
-                  <div style={{
-                    position: 'relative',
-                    background: PARCHMENT, border: `1px dashed ${consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : HAIRLINE}`,
-                    borderRadius: R_MD, padding: '10px 14px',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    cursor: 'pointer', transition: 'border-color 0.15s',
-                  }}>
-                    <Upload size={14} color={consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : INK_48} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : INK_48, letterSpacing: '-0.12px' }}>
-                      {consentFile ? consentFile.name : 'Choose file — PDF or image'}
-                    </span>
-                    <input type="file" accept="application/pdf,image/*" onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      setCF(file);
-                      if (file) validateConsentFile(file);
-                      else setConsentValidation(null);
-                    }}
-                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
-                  </div>
-                  {/* Validation status message */}
-                  {consentValidation && (
-                    <div style={{
-                      marginTop: 8, fontSize: 12, 
-                      color: consentValidation.valid ? SUCCESS : DANGER,
-                      fontWeight: 500,
-                    }}>
-                      {consentValidation.msg}
-                    </div>
-                  )}
-                </Field>
+              {/* Signed Consent Upload & Criteria Checklist */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, borderTop: `1px solid ${HAIRLINE}`, paddingTop: 16 }}>
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    <Upload size={14} color={SUCCESS} />
+                    Upload Signed Informed Consent Form (PDF / Image)
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    onChange={(e) => setConsentFile(e.target.files?.[0] || null)}
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '8px 12px', fontSize: 13, color: INK_80 }}
+                  />
+                </div>
 
-                <Field label="Inclusion / Exclusion Criteria">
-                  <div style={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', fontSize: 14, color: INK_80, letterSpacing: '-0.224px', lineHeight: 1.47 }}>
-                      <span style={{
-                        width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 2,
-                        border: `1.5px solid ${inclusion ? PRIMARY : HAIRLINE}`,
-                        background: inclusion ? PRIMARY : CANVAS,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.12s ease', cursor: 'pointer',
-                      }} onClick={() => setInclusion(!inclusion)}>
-                        {inclusion && (
-                          <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                            <path d="M1 4.5L4 7.5L10 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </span>
-                      Subject satisfies all Protocol Inclusion &amp; Exclusion Criteria as per approved IEC protocol
-                    </label>
-                  </div>
-                </Field>
+                <div style={{ display: 'flex', alignItems: 'center', paddingTop: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: INK }}>
+                    <input
+                      type="checkbox"
+                      checked={inclusionChecked}
+                      onChange={(e) => setInclusionChecked(e.target.checked)}
+                      style={{ width: 16, height: 16, accentColor: PRIMARY, borderRadius: 4 }}
+                    />
+                    Subject satisfies all Inclusion &amp; Exclusion Criteria for <strong>{currentStudy?.short_code}</strong>
+                  </label>
+                </div>
               </div>
             </div>
-          </Section>
+          </div>
 
-          {/* ── SECTION 2: Clinical Vitals + CRF ── */}
-          <Section
-            icon={<Stethoscope size={12} />}
-            title="Section 2 — Baseline Clinical Vitals & Ayurvedic CRF Assessment"
-            accent={SUCCESS}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* SECTION 2: BASELINE VITALS & AYUSH HYBRID CRF */}
+          <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, overflow: 'hidden' }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '14px 24px', background: PARCHMENT, borderBottom: `1px solid ${HAIRLINE}`
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, ...TYPE.label, color: SUCCESS }}>
+                <Stethoscope size={16} />
+                Section 2: Baseline Clinical Vitals &amp; Ayurvedic CRF Assessment
+              </span>
+            </div>
 
-              {/* Row 1: Diagnosis + Prakriti */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16 }}>
-                <Field label="Clinical Indication — NAMASTE Diagnosis (ICD-11 Mapped)">
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Clinical Indication / Diagnosis (Search NAMASTE / ICD-11)
+                  </label>
                   <select
-                    value={diagnosis.code}
-                    onChange={e => { const d = NAMASTE.find(n => n.code === e.target.value); if (d) setDx(d); }}
-                    style={{ ...IS, appearance: 'none', fontWeight: 600 }}
+                    value={selectedDiagnosis.code}
+                    onChange={(e) => {
+                      const found = NAMASTE_DIAGNOSES.find(d => d.code === e.target.value);
+                      if (found) setSelectedDiagnosis(found);
+                    }}
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 14px', color: INK, fontSize: 14, fontWeight: 600, outline: 'none' }}
                   >
-                    {NAMASTE.map(d => <option key={d.code} value={d.code}>{d.term}</option>)}
+                    {NAMASTE_DIAGNOSES.map((d) => (
+                      <option key={d.code} value={d.code}>
+                        {d.term}
+                      </option>
+                    ))}
                   </select>
-                  {/* Code pills below the select — verge.md inline badge style */}
-                  <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                    <span style={{ ...BADGE.green, fontSize: 10 }}>
-                      NAMASTE: {diagnosis.code}
-                    </span>
-                    <span style={{ ...BADGE.blue, fontSize: 10 }}>
-                      ICD-11: {diagnosis.icd11}
-                    </span>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 12, color: INK_48, marginTop: 6 }}>
+                    <span>Attached NAMASTE Code: <strong style={{ color: SUCCESS, fontFamily: FONT_MONO }}>{selectedDiagnosis.code}</strong></span>
+                    <span>WHO ICD-11 Code: <strong style={{ color: PRIMARY, fontFamily: FONT_MONO }}>{selectedDiagnosis.icd11}</strong></span>
                   </div>
-                </Field>
+                </div>
 
-                <Field label="Ayurvedic Prakriti Assessment">
-                  <select value={prakriti} onChange={e => setPrakriti(e.target.value)} style={{ ...IS, appearance: 'none', fontWeight: 600 }}>
-                    <option value="">Select prakriti</option>
-                    {['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].map(v => <option key={v}>{v}</option>)}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Ayurvedic Prakriti Assessment <span style={{ color: DANGER }}>*</span>
+                  </label>
+                  <select
+                    value={prakriti}
+                    onChange={(e) => setPrakriti(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 14px', color: prakriti ? INK : INK_48, fontSize: 14, outline: 'none' }}
+                    required
+                  >
+                    <option value="">-- Select Prakriti --</option>
+                    <option value="Vata-Pitta">Vata-Pitta (V:50%, P:35%, K:15%)</option>
+                    <option value="Kapha-Vata">Kapha-Vata (K:50%, V:35%, P:15%)</option>
+                    <option value="Pitta-Kapha">Pitta-Kapha (P:50%, K:35%, V:15%)</option>
+                    <option value="Tridoshaja">Tridoshaja (Balanced Constitution)</option>
                   </select>
-                </Field>
+                </div>
               </div>
 
-              {/* Row 2: Vitals */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, paddingTop: 16, borderTop: `1px solid ${HAIRLINE}` }}>
-                <Field label="Blood Pressure (Systolic / Diastolic)">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" placeholder="Systolic" value={sysBP} onChange={e => setSysBP(e.target.value)}
-                      style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
-                    <span style={{ fontSize: 14, color: INK_48, flexShrink: 0 }}>/</span>
-                    <input type="number" placeholder="Diastolic" value={diaBP} onChange={e => setDiaBP(e.target.value)}
-                      style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
-                    <span style={{ fontSize: 12, color: INK_48, flexShrink: 0 }}>mmHg</span>
+              {/* Vitals Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, borderTop: `1px solid ${HAIRLINE}`, paddingTop: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Blood Pressure (Sys / Dia) <span style={{ color: DANGER }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      placeholder="120"
+                      value={systolicBp}
+                      onChange={(e) => setSystolicBp(e.target.value)}
+                      min="60"
+                      max="250"
+                      style={{ width: '45%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 10px', color: INK, fontSize: 14, textAlign: 'center', fontFamily: FONT_MONO, outline: 'none' }}
+                      required
+                    />
+                    <span style={{ color: INK_48 }}>/</span>
+                    <input
+                      type="number"
+                      placeholder="80"
+                      value={diastolicBp}
+                      onChange={(e) => setDiastolicBp(e.target.value)}
+                      min="40"
+                      max="150"
+                      style={{ width: '45%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 10px', color: INK, fontSize: 14, textAlign: 'center', fontFamily: FONT_MONO, outline: 'none' }}
+                      required
+                    />
+                    <span style={{ fontSize: 12, color: INK_48 }}>mmHg</span>
                   </div>
-                </Field>
+                  <span style={{ fontSize: 11, color: INK_48, marginTop: 4, display: 'block' }}>Sys: 60-250, Dia: 40-150</span>
+                </div>
 
-                <Field label="Resting Pulse Rate">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" placeholder="Pulse" value={pulse} onChange={e => setPulse(e.target.value)}
-                      style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
-                    <span style={{ fontSize: 12, color: INK_48, flexShrink: 0 }}>bpm</span>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Resting Pulse Rate <span style={{ color: DANGER }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      placeholder="e.g. 78"
+                      value={pulseRate}
+                      onChange={(e) => setPulseRate(e.target.value)}
+                      min="40"
+                      max="220"
+                      style={{ width: '100%', boxSizing: 'border-box', background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '9px 10px', color: INK, fontSize: 14, textAlign: 'center', fontFamily: FONT_MONO, outline: 'none' }}
+                      required
+                    />
+                    <span style={{ fontSize: 12, color: INK_48 }}>bpm</span>
                   </div>
-                </Field>
+                  <span style={{ fontSize: 11, color: INK_48, marginTop: 4, display: 'block' }}>Range: 40 – 220 bpm</span>
+                </div>
 
-                <Field label="Pharmacy Dispensation (Auto)">
-                  <div style={{
-                    background: PARCHMENT, border: `1px solid ${HAIRLINE}`,
-                    borderRadius: R_MD, padding: '10px 14px',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                  }}>
-                    <Pill size={14} color={SUCCESS} style={{ flexShrink: 0 }} />
-                    <div style={{ fontSize: 13, color: INK_80, lineHeight: 1.4 }}>
-                      <strong style={{ color: INK }}>60 Capsules</strong> deducted from Batch{' '}
-                      <strong style={{ color: SUCCESS }}>{batch?.batch_no || 'ASH-2026-B1'}</strong>
-                    </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Pharmacy Dispensation</label>
+                  <div style={{ background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '8px 12px', fontSize: 12, color: INK_80 }}>
+                    <span style={{ color: INK_48, display: 'block' }}>Auto-Dispensing:</span>
+                    <strong>60 Capsules</strong> from Batch <strong style={{ color: SUCCESS, fontFamily: FONT_MONO }}>{currentBatch?.batch_no || 'ASH-2026-B1'}</strong>
                   </div>
-                </Field>
+                </div>
               </div>
 
-              {/* Row 3: Pathya-Apathya Diet Checklist */}
-              <div style={{
-                background: PARCHMENT, border: `1px solid ${HAIRLINE}`,
-                borderRadius: R_MD, padding: 20,
-              }}>
-                {/* Checklist header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: '-0.224px' }}>
+              {/* STRUCTURED PATHYA-APATHYA CHECKLIST */}
+              <div style={{ background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>
                     Structured Pathya-Apathya (Diet &amp; Regimen) Compliance Checklist
                   </span>
-                  {/* Auto-calculated score badge */}
-                  <span style={{
-                    fontSize: 13, fontWeight: 700, color: dietScore >= 75 ? SUCCESS : dietScore >= 50 ? WARNING : DANGER,
-                    background: dietScore >= 75 ? 'rgba(52,199,89,0.08)' : dietScore >= 50 ? 'rgba(255,159,10,0.08)' : 'rgba(255,69,58,0.08)',
-                    border: `1px solid ${dietScore >= 75 ? 'rgba(52,199,89,0.28)' : dietScore >= 50 ? 'rgba(255,159,10,0.28)' : 'rgba(255,69,58,0.28)'}`,
-                    padding: '3px 14px', borderRadius: R_PILL, letterSpacing: '-0.12px',
-                  }}>
-                    Compliance: {dietScore}%
+                  <span style={BADGE.green}>
+                    Calculated Compliance: {calculatedDietScore}%
                   </span>
                 </div>
 
-                {/* Score progress bar */}
-                <div style={{ height: 4, background: 'rgba(0,0,0,0.08)', borderRadius: R_PILL, overflow: 'hidden', marginBottom: 18 }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${dietScore}%`,
-                    background: dietScore >= 75 ? SUCCESS : dietScore >= 50 ? WARNING : DANGER,
-                    borderRadius: R_PILL, transition: 'width 0.4s ease',
-                  }} />
-                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12, color: INK_80 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={dietChecklist.aharaTiming}
+                      onChange={(e) => setDietChecklist({ ...dietChecklist, aharaTiming: e.target.checked })}
+                      style={{ width: 16, height: 16, accentColor: SUCCESS }}
+                    />
+                    Followed Ahara Kala (Regular, timely meal intervals)
+                  </label>
 
-                {/* 4 checklist items in 2x2 grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  <CheckItem
-                    label="Followed Ahara Kala (regular, timely meal intervals)"
-                    checked={diet.aharaTiming}
-                    onChange={v => setDiet({ ...diet, aharaTiming: v })}
-                  />
-                  <CheckItem
-                    label="Avoided Apathya foods (heavy/fried, curd at night)"
-                    checked={diet.apathyaAvoided}
-                    onChange={v => setDiet({ ...diet, apathyaAvoided: v })}
-                  />
-                  <CheckItem
-                    label="Followed Dinacharya regimen (hydration &amp; regular sleep)"
-                    checked={diet.dinacharyaFollowed}
-                    onChange={v => setDiet({ ...diet, dinacharyaFollowed: v })}
-                  />
-                  <CheckItem
-                    label="Administered drug with prescribed Anupana (warm water)"
-                    checked={diet.herbalAnupana}
-                    onChange={v => setDiet({ ...diet, herbalAnupana: v })}
-                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={dietChecklist.apathyaAvoided}
+                      onChange={(e) => setDietChecklist({ ...dietChecklist, apathyaAvoided: e.target.checked })}
+                      style={{ width: 16, height: 16, accentColor: SUCCESS }}
+                    />
+                    Strictly avoided Apathya foods (heavy fried, cold/curd at night)
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={dietChecklist.dinacharyaFollowed}
+                      onChange={(e) => setDietChecklist({ ...dietChecklist, dinacharyaFollowed: e.target.checked })}
+                      style={{ width: 16, height: 16, accentColor: SUCCESS }}
+                    />
+                    Followed daily regimen (adequate hydration &amp; regular sleep)
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={dietChecklist.herbalAnupana}
+                      onChange={(e) => setDietChecklist({ ...dietChecklist, herbalAnupana: e.target.checked })}
+                      style={{ width: 16, height: 16, accentColor: SUCCESS }}
+                    />
+                    Administered trial drug with prescribed Anupana (warm water)
+                  </label>
                 </div>
               </div>
             </div>
-          </Section>
+          </div>
 
-          {/* ── Submit CTA ── */}
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
-            disabled={loading}
-            style={{ ...btnPrimary(loading), width: '100%', fontSize: 17, padding: '14px 22px', gap: 10 }}
-            onMouseDown={e => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
-            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            disabled={loading || !isEnrollingUnlocked}
+            style={{
+              width: '100%', padding: '14px 0', borderRadius: R_PILL,
+              border: 'none', fontSize: 15, fontWeight: 600,
+              cursor: isEnrollingUnlocked ? 'pointer' : 'not-allowed',
+              background: isEnrollingUnlocked ? PRIMARY : PARCHMENT,
+              color: isEnrollingUnlocked ? '#ffffff' : INK_48,
+              boxShadow: isEnrollingUnlocked ? '0 4px 14px rgba(0,102,204,0.25)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'transform 0.1s ease', fontFamily: FONT_STACK
+            }}
           >
-            <CheckCircle2 size={18} />
-            {loading ? 'Executing Trial Transaction…' : `Enroll ${nextCode} & Submit Baseline CRF`}
+            {isEnrollingUnlocked ? (
+              <>
+                <CheckCircle2 size={18} />
+                {loading ? 'Executing Trial Transaction...' : `Enroll ${nextSubjectCode} into ${currentStudy?.short_code}`}
+              </>
+            ) : (
+              <>
+                <Lock size={18} color={WARNING} />
+                Enrollment Locked (Protocol Not in Enrolling State)
+              </>
+            )}
           </button>
         </form>
       )}
 
-      {/* ══════════════════════════════
-          TAB 2 — ENROLLED COHORT TABLE
-          ══════════════════════════════ */}
-      {tab === 'LIST' && (
+      {/* TAB 2: ENROLLED COHORT TABLE */}
+      {activeTab === 'LIST' && (
         <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 24px', borderBottom: `1px solid ${HAIRLINE}`, background: PARCHMENT }}>
-            <h2 style={{ fontSize: 17, fontWeight: 600, color: INK, letterSpacing: '-0.374px', margin: 0 }}>
-              Enrolled Cohort &amp; Baseline CRF Records
-            </h2>
+          <div style={{ padding: '14px 24px', background: PARCHMENT, borderBottom: `1px solid ${HAIRLINE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+            <span style={{ fontWeight: 600, color: INK }}>
+              Active Cohort for: <strong style={{ color: PRIMARY }}>[{currentStudy?.short_code}] {currentStudy?.title}</strong>
+            </span>
+            <span style={{ fontFamily: FONT_MONO, color: INK_48 }}>Total Enrolled: {participants.length}</span>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: PARCHMENT, borderBottom: `1px solid ${HAIRLINE}` }}>
-                  {['Subject Code', 'Demographics & Vitals', 'NAMASTE Diagnosis', 'Prakriti', 'Diet Score', 'Consent'].map(h => (
-                    <th key={h} style={{
-                      padding: '11px 18px', textAlign: 'left',
-                      fontSize: 10, fontWeight: 600, color: INK_48,
-                      textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                    }}>
+                  {['Subject Code', 'Demographics & Vitals', 'Ayurvedic Diagnosis', 'Prakriti', 'Diet Score', 'Dispensed Batch'].map((h) => (
+                    <th key={h} style={{ padding: '12px 18px', fontSize: 11, fontWeight: 600, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
                   ))}
@@ -574,74 +751,53 @@ export const ParticipantsPage: React.FC = () => {
               <tbody>
                 {participants.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: 48, textAlign: 'center', fontSize: 14, color: INK_48 }}>
-                      No participants enrolled yet. Use the Enroll tab to add the first subject.
+                    <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: INK_48 }}>
+                      No participants enrolled in this study yet. Switch to "Enroll New Subject" to register the first participant.
                     </td>
                   </tr>
-                ) : participants.map(p => {
-                  const v = p.visits?.[0];
-                  const prakritiLabel = (() => {
-                    if (!v?.prakriti_assessment) return 'Vata-Pitta';
-                    try { return JSON.parse(v.prakriti_assessment).dominant_prakriti || v.prakriti_assessment; }
-                    catch { return v.prakriti_assessment; }
-                  })();
-                  const score = v?.pathya_apathya_diet_score ?? 100;
-                  const scoreColor = score >= 75 ? SUCCESS : score >= 50 ? WARNING : DANGER;
-
-                  return (
-                    <tr
-                      key={p.id}
-                      style={{ borderBottom: `1px solid ${HAIRLINE}`, transition: 'background 0.1s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,102,204,0.03)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      {/* Subject Code — monospace */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={{ fontFamily: FONT_MONO, fontSize: 13, fontWeight: 700, color: INK }}>
+                ) : (
+                  participants.map((p) => {
+                    const baselineVisit = p.visits?.[0];
+                    return (
+                      <tr key={p.id} style={{ borderBottom: `1px solid ${HAIRLINE}`, transition: 'background 0.1s' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,102,204,0.03)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                        <td style={{ padding: '14px 18px', fontFamily: FONT_MONO, fontWeight: 600, color: INK, fontSize: 13 }}>
                           {p.participant_code}
-                        </span>
-                      </td>
-
-                      {/* Demographics + vitals */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={{ display: 'block', fontWeight: 600, color: INK, letterSpacing: '-0.224px' }}>
-                          {p.age} yrs · {p.gender}
-                        </span>
-                        <span style={{ display: 'block', fontSize: 11, color: INK_48, marginTop: 2, fontFamily: FONT_MONO }}>
-                          BP: {v?.modern_vitals_and_labs?.blood_pressure || '—'} · {v?.modern_vitals_and_labs?.pulse_rate || '—'} bpm
-                        </span>
-                      </td>
-
-                      {/* NAMASTE Diagnosis */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={{ display: 'block', fontWeight: 600, color: INK, letterSpacing: '-0.224px', fontSize: 12, maxWidth: 220 }}>
-                          {NAMASTE.find(n => n.code === v?.namaste_terminology_code)?.term?.split('(')[0]?.trim() || 'Tamaka Shwasa'}
-                        </span>
-                        <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: SUCCESS, marginTop: 2, display: 'block' }}>
-                          {v?.namaste_terminology_code || 'NAMASTE_AYU_0842'}
-                        </span>
-                      </td>
-
-                      {/* Prakriti */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={BADGE.blue}>{prakritiLabel}</span>
-                      </td>
-
-                      {/* Diet score */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: scoreColor }}>{score}%</span>
-                        <div style={{ height: 3, background: 'rgba(0,0,0,0.08)', borderRadius: R_PILL, marginTop: 5, width: 60, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${score}%`, background: scoreColor, borderRadius: R_PILL }} />
-                        </div>
-                      </td>
-
-                      {/* Consent */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <span style={BADGE.green}>{p.consent?.consent_type || 'VERIFIED'}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          <span style={{ display: 'block', fontWeight: 600, color: INK }}>{p.age} yrs • {p.gender}</span>
+                          <span style={{ display: 'block', fontSize: 11, color: INK_48, marginTop: 2 }}>
+                            BP: {baselineVisit?.modern_vitals_and_labs?.blood_pressure || '120/80 mmHg'} | Pulse: {baselineVisit?.modern_vitals_and_labs?.pulse_rate || 78} bpm
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          <span style={{ fontWeight: 600, color: INK, display: 'block' }}>
+                            {baselineVisit?.namaste_terminology_code ? 'Tamaka Shwasa (Asthma)' : 'Anxiety Disorder'}
+                          </span>
+                          <span style={{ fontSize: 11, fontFamily: FONT_MONO, color: SUCCESS }}>
+                            {baselineVisit?.namaste_terminology_code || 'NAMASTE_AYU_0842'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          <span style={BADGE.blue}>
+                            {typeof baselineVisit?.prakriti_assessment === 'string' && baselineVisit.prakriti_assessment.startsWith('{')
+                              ? JSON.parse(baselineVisit.prakriti_assessment).dominant_prakriti
+                              : baselineVisit?.prakriti_assessment || 'Vata-Pitta'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          <span style={{ color: SUCCESS, fontWeight: 600, fontSize: 14 }}>
+                            {baselineVisit?.pathya_apathya_diet_score ?? 100}%
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 18px' }}>
+                          <span style={{ ...BADGE.ink, fontFamily: FONT_MONO }}>
+                            {baselineVisit?.dispensed_batch_no || 'ASH-2026-B1'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

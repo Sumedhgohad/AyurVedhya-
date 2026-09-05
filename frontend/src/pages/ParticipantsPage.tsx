@@ -93,33 +93,36 @@ export const ParticipantsPage: React.FC = () => {
   const [loading, setLoading]           = useState(false);
   const [tab, setTab]                   = useState<'ENROLL' | 'LIST'>('ENROLL');
   const [note, setNote]                 = useState<{ msg: string; ok: boolean } | null>(null);
+  const [consentValidation, setConsentValidation] = useState<{ valid: boolean; msg: string } | null>(null);
 
   // ── Step 1: Demographics ──
-  const [age, setAge]             = useState('38');
-  const [gender, setGender]       = useState('Female');
-  const [heightCm, setHeight]     = useState('162');
-  const [weightKg, setWeight]     = useState('64');
-  const [opd, setOpd]             = useState('OPD-2026-9481');
+  const [age, setAge]             = useState('');
+  const [gender, setGender]       = useState('');
+  const [heightCm, setHeight]     = useState('');
+  const [weightKg, setWeight]     = useState('');
+  const [opd, setOpd]             = useState('');
   const [consentFile, setCF]      = useState<File | null>(null);
-  const [inclusion, setInclusion] = useState(true);
+  const [inclusion, setInclusion] = useState(false);
 
   // ── Step 2: Clinical CRF ──
-  const [sysBP, setSysBP]       = useState('120');
-  const [diaBP, setDiaBP]       = useState('80');
-  const [pulse, setPulse]       = useState('78');
+  const [sysBP, setSysBP]       = useState('');
+  const [diaBP, setDiaBP]       = useState('');
+  const [pulse, setPulse]       = useState('');
   const [diagnosis, setDx]      = useState(NAMASTE[0]);
-  const [prakriti, setPrakriti] = useState('Vata-Pitta');
+  const [prakriti, setPrakriti] = useState('');
 
   // ── Diet checklist ──
   const [diet, setDiet] = useState({
-    aharaTiming:       true,
-    apathyaAvoided:    true,
-    dinacharyaFollowed:true,
-    herbalAnupana:     true,
+    aharaTiming:       false,
+    apathyaAvoided:    false,
+    dinacharyaFollowed:false,
+    herbalAnupana:     false,
   });
 
   // ── Derived ──
-  const bmi          = (Number(weightKg) / ((Number(heightCm) / 100) ** 2)).toFixed(1);
+  const bmi          = (Number(weightKg) && Number(heightCm)) 
+    ? (Number(weightKg) / ((Number(heightCm) / 100) ** 2)).toFixed(1) 
+    : '0.0';
   const dietScore    = Object.values(diet).filter(Boolean).length * 25;
   const study        = studies[0];
   const batch        = study?.ip_batches?.[0];
@@ -138,13 +141,46 @@ export const ParticipantsPage: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  const validateConsentFile = async (file: File) => {
+    if (!study) return;
+    
+    setConsentValidation({ valid: false, msg: 'Validating consent document...' });
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('study_id', study.id);
+      formData.append('document_type', 'SIGNED_INFORMED_CONSENT');
+      formData.append('uploaded_by', 'investigator@aiia.gov.in');
+      
+      await api.post('/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      setConsentValidation({ valid: true, msg: '✅ Valid consent document detected' });
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Validation failed';
+      setConsentValidation({ valid: false, msg: `❌ ${errorMsg}` });
+      setCF(null); // Clear invalid file
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!study) return;
     if (!inclusion) { alert('Cannot enroll: Subject must meet all inclusion/exclusion criteria.'); return; }
+    
+    // Check if consent file is present but not validated
+    if (consentFile && (!consentValidation || !consentValidation.valid)) {
+      setNote({ msg: 'Please upload a valid consent document before enrolling', ok: false });
+      return;
+    }
+    
     setLoading(true); setNote(null);
 
     try {
+      // 1. Consent file already validated during file selection, skip re-upload
+      // 2. Enroll the participant
       const pRes = await api.post('/clinical/participants/enroll', {
         study_id: study.id,
         participant_code: nextCode,
@@ -154,14 +190,6 @@ export const ParticipantsPage: React.FC = () => {
         language_code: 'hi',
         witness_name: 'Dr. Clinical Coordinator',
       });
-
-      if (consentFile) {
-        const fd = new FormData();
-        fd.append('file', consentFile); fd.append('study_id', study.id);
-        fd.append('document_type', 'SIGNED_INFORMED_CONSENT');
-        fd.append('uploaded_by', 'investigator@aiia.gov.in');
-        await api.post('/documents/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      }
 
       await api.post('/clinical/visits/record', {
         participant_id: pRes.data.id,
@@ -186,6 +214,7 @@ export const ParticipantsPage: React.FC = () => {
 
       setNote({ msg: `${nextCode} enrolled successfully. Baseline CRF saved, 60 units dispensed from Batch ${batch?.batch_no}.`, ok: true });
       setCF(null);
+      setConsentValidation(null);
       loadData();
       setTab('LIST');
     } catch (err: any) {
@@ -291,23 +320,24 @@ export const ParticipantsPage: React.FC = () => {
               {/* Row 1: 4 columns */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 140px 1fr', gap: 16 }}>
                 <Field label="Hospital OPD / IPD Registration Number">
-                  <input type="text" value={opd} onChange={e => setOpd(e.target.value)} style={IS} required />
+                  <input type="text" placeholder="OPD/IPD Number" value={opd} onChange={e => setOpd(e.target.value)} style={IS} required />
                 </Field>
 
                 <Field label="Age (Years)">
-                  <input type="number" value={age} min="18" max="70" onChange={e => setAge(e.target.value)} style={IS} required />
+                  <input type="number" placeholder="Age" value={age} min="18" max="70" onChange={e => setAge(e.target.value)} style={IS} required />
                 </Field>
 
                 <Field label="Gender">
                   <select value={gender} onChange={e => setGender(e.target.value)} style={{ ...IS, appearance: 'none' }}>
+                    <option value="">Select gender</option>
                     {['Female', 'Male', 'Other'].map(v => <option key={v}>{v}</option>)}
                   </select>
                 </Field>
 
                 <Field label="Height (cm) / Weight (kg) — BMI Auto-Calculated" hint={`Calculated BMI: ${bmi} kg/m²`}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="number" placeholder="Height cm" value={heightCm} onChange={e => setHeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
-                    <input type="number" placeholder="Weight kg" value={weightKg} onChange={e => setWeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
+                    <input type="number" placeholder="Height" value={heightCm} onChange={e => setHeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
+                    <input type="number" placeholder="Weight" value={weightKg} onChange={e => setWeight(e.target.value)} style={{ ...IS, textAlign: 'center' }} />
                   </div>
                 </Field>
               </div>
@@ -317,18 +347,33 @@ export const ParticipantsPage: React.FC = () => {
                 <Field label="Upload Signed Informed Consent Form (PDF / Image)">
                   <div style={{
                     position: 'relative',
-                    background: PARCHMENT, border: `1px dashed ${consentFile ? SUCCESS : HAIRLINE}`,
+                    background: PARCHMENT, border: `1px dashed ${consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : HAIRLINE}`,
                     borderRadius: R_MD, padding: '10px 14px',
                     display: 'flex', alignItems: 'center', gap: 10,
                     cursor: 'pointer', transition: 'border-color 0.15s',
                   }}>
-                    <Upload size={14} color={consentFile ? SUCCESS : INK_48} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: consentFile ? SUCCESS : INK_48, letterSpacing: '-0.12px' }}>
+                    <Upload size={14} color={consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : INK_48} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: consentValidation?.valid ? SUCCESS : consentValidation?.valid === false ? DANGER : consentFile ? SUCCESS : INK_48, letterSpacing: '-0.12px' }}>
                       {consentFile ? consentFile.name : 'Choose file — PDF or image'}
                     </span>
-                    <input type="file" accept="application/pdf,image/*" onChange={e => setCF(e.target.files?.[0] || null)}
+                    <input type="file" accept="application/pdf,image/*" onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      setCF(file);
+                      if (file) validateConsentFile(file);
+                      else setConsentValidation(null);
+                    }}
                       style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
                   </div>
+                  {/* Validation status message */}
+                  {consentValidation && (
+                    <div style={{
+                      marginTop: 8, fontSize: 12, 
+                      color: consentValidation.valid ? SUCCESS : DANGER,
+                      fontWeight: 500,
+                    }}>
+                      {consentValidation.msg}
+                    </div>
+                  )}
                 </Field>
 
                 <Field label="Inclusion / Exclusion Criteria">
@@ -386,6 +431,7 @@ export const ParticipantsPage: React.FC = () => {
 
                 <Field label="Ayurvedic Prakriti Assessment">
                   <select value={prakriti} onChange={e => setPrakriti(e.target.value)} style={{ ...IS, appearance: 'none', fontWeight: 600 }}>
+                    <option value="">Select prakriti</option>
                     {['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].map(v => <option key={v}>{v}</option>)}
                   </select>
                 </Field>
@@ -395,10 +441,10 @@ export const ParticipantsPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, paddingTop: 16, borderTop: `1px solid ${HAIRLINE}` }}>
                 <Field label="Blood Pressure (Systolic / Diastolic)">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" value={sysBP} onChange={e => setSysBP(e.target.value)}
+                    <input type="number" placeholder="Systolic" value={sysBP} onChange={e => setSysBP(e.target.value)}
                       style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
                     <span style={{ fontSize: 14, color: INK_48, flexShrink: 0 }}>/</span>
-                    <input type="number" value={diaBP} onChange={e => setDiaBP(e.target.value)}
+                    <input type="number" placeholder="Diastolic" value={diaBP} onChange={e => setDiaBP(e.target.value)}
                       style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
                     <span style={{ fontSize: 12, color: INK_48, flexShrink: 0 }}>mmHg</span>
                   </div>
@@ -406,7 +452,7 @@ export const ParticipantsPage: React.FC = () => {
 
                 <Field label="Resting Pulse Rate">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" value={pulse} onChange={e => setPulse(e.target.value)}
+                    <input type="number" placeholder="Pulse" value={pulse} onChange={e => setPulse(e.target.value)}
                       style={{ ...IS, textAlign: 'center', fontFamily: FONT_MONO }} />
                     <span style={{ fontSize: 12, color: INK_48, flexShrink: 0 }}>bpm</span>
                   </div>

@@ -14,6 +14,14 @@ export class DocumentsController {
     @Body('document_type') documentType: string,
     @Body('uploaded_by') uploadedBy: string,
   ) {
+    console.log('[DOCUMENTS CONTROLLER] Upload called with:', {
+      studyId,
+      documentType,
+      uploadedBy,
+      fileName: file?.originalname,
+      mimeType: file?.mimetype,
+      fileSize: file?.size
+    });
     return this.docService.uploadAndHashDocument(studyId, documentType, uploadedBy || 'investigator@aiia.gov.in', file);
   }
 

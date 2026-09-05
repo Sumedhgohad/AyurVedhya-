@@ -1,5 +1,24 @@
 export type UserRole = 'ROLE_INVESTIGATOR' | 'ROLE_COMPLIANCE_OFFICER' | 'ROLE_LEADERSHIP';
 
+export interface VisitDefinition {
+  id: string;
+  visit_name: string;
+  visit_day: number;
+  window_minus: number;
+  window_plus: number;
+  visit_type: string;
+  is_mandatory: boolean;
+}
+
+export interface StudyArm {
+  id: string;
+  arm_code: string;
+  label: string;
+  arm_type: string;
+  description?: string;
+  visit_definitions?: VisitDefinition[];
+}
+
 export interface Study {
   id: string;
   short_code: string;
@@ -8,6 +27,8 @@ export interface Study {
   study_type: string;
   status: string;
   target_sample_size: number;
+  start_date?: string;
+  planned_end_date?: string;
   ip_batches?: Array<{
     id: string;
     formulation_name: string;
@@ -17,13 +38,18 @@ export interface Study {
   }>;
   ctri_registration?: {
     ctri_id: string;
+    registration_date?: string;
     next_mandatory_update_due: string;
   };
   iec_submissions?: Array<{
     id: string;
+    submission_date?: string;
     decision: string;
+    decision_date?: string;
     valid_until: string;
+    remarks?: string;
   }>;
+  study_arms?: StudyArm[];
 }
 
 export interface SaeClock {

@@ -89,3 +89,43 @@ export class CreateIpBatchDto {
   @IsNotEmpty()
   quantity: number;
 }
+
+export class CreateStudyArmDto {
+  @IsString()
+  @IsNotEmpty()
+  arm_code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  label: string;
+
+  @IsOptional()
+  @IsString()
+  arm_type?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
+export class CreateVisitDefinitionDto {
+  @IsString()
+  @IsNotEmpty()
+  visit_name: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  visit_day: number;
+
+  @IsOptional()
+  @IsNumber()
+  window_minus?: number;
+
+  @IsOptional()
+  @IsNumber()
+  window_plus?: number;
+
+  @IsOptional()
+  @IsString()
+  visit_type?: string;
+}

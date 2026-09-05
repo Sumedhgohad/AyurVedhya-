@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from 'typeorm';
 import { StudyIpBatch } from './study-ip-batch.entity';
+import { StudyArm } from './study-arm.entity';
 import { IecSubmission } from './iec-submission.entity';
 import { CtriRegistration } from './ctri-registration.entity';
 
@@ -49,6 +50,9 @@ export class Study {
 
   @OneToMany(() => StudyIpBatch, (batch) => batch.study)
   ip_batches: StudyIpBatch[];
+
+  @OneToMany(() => StudyArm, (arm) => arm.study, { cascade: true })
+  study_arms: StudyArm[];
 
   @OneToMany(() => IecSubmission, (iec) => iec.study)
   iec_submissions: IecSubmission[];

@@ -5,7 +5,17 @@ import { Study, StudyStatus } from './entities/study.entity';
 import { StudyIpBatch } from './entities/study-ip-batch.entity';
 import { IecSubmission, IecDecisionStatus } from './entities/iec-submission.entity';
 import { CtriRegistration } from './entities/ctri-registration.entity';
-import { CreateStudyDto, SubmitIecDto, DecideIecDto, LinkCtriDto, CreateIpBatchDto } from './dto/study.dto';
+import { StudyArm, ArmType } from './entities/study-arm.entity';
+import { VisitDefinition, VisitDefinitionType } from './entities/visit-definition.entity';
+import {
+  CreateStudyDto,
+  SubmitIecDto,
+  DecideIecDto,
+  LinkCtriDto,
+  CreateIpBatchDto,
+  CreateStudyArmDto,
+  CreateVisitDefinitionDto,
+} from './dto/study.dto';
 
 @Injectable()
 export class StudyService {
@@ -14,6 +24,8 @@ export class StudyService {
     @InjectRepository(StudyIpBatch, 'studyConnection') private ipRepo: Repository<StudyIpBatch>,
     @InjectRepository(IecSubmission, 'studyConnection') private iecRepo: Repository<IecSubmission>,
     @InjectRepository(CtriRegistration, 'studyConnection') private ctriRepo: Repository<CtriRegistration>,
+    @InjectRepository(StudyArm, 'studyConnection') private armRepo: Repository<StudyArm>,
+    @InjectRepository(VisitDefinition, 'studyConnection') private visitDefRepo: Repository<VisitDefinition>,
   ) {}
 
   async createStudy(dto: CreateStudyDto): Promise<Study> {
@@ -23,7 +35,7 @@ export class StudyService {
 
   async getAllStudies(): Promise<Study[]> {
     return await this.studyRepo.find({
-      relations: ['ip_batches', 'iec_submissions', 'ctri_registration'],
+      relations: ['ip_batches', 'iec_submissions', 'ctri_registration', 'study_arms', 'study_arms.visit_definitions'],
       order: { created_at: 'DESC' },
     });
   }
@@ -31,10 +43,37 @@ export class StudyService {
   async getStudyById(id: string): Promise<Study> {
     const study = await this.studyRepo.findOne({
       where: { id },
-      relations: ['ip_batches', 'iec_submissions', 'ctri_registration'],
+      relations: ['ip_batches', 'iec_submissions', 'ctri_registration', 'study_arms', 'study_arms.visit_definitions'],
     });
     if (!study) throw new NotFoundException(`Study with ID ${id} not found.`);
     return study;
+  }
+
+  async createStudyArm(studyId: string, dto: CreateStudyArmDto): Promise<StudyArm> {
+    const study = await this.getStudyById(studyId);
+    const arm = this.armRepo.create({
+      study,
+      arm_code: dto.arm_code,
+      label: dto.label,
+      arm_type: (dto.arm_type as ArmType) || ArmType.INTERVENTION,
+      description: dto.description,
+    });
+    return await this.armRepo.save(arm);
+  }
+
+  async createVisitDefinition(armId: string, dto: CreateVisitDefinitionDto): Promise<VisitDefinition> {
+    const arm = await this.armRepo.findOne({ where: { id: armId } });
+    if (!arm) throw new NotFoundException(`Study Arm with ID ${armId} not found.`);
+
+    const vd = this.visitDefRepo.create({
+      arm,
+      visit_name: dto.visit_name,
+      visit_day: dto.visit_day,
+      window_minus: dto.window_minus || 0,
+      window_plus: dto.window_plus || 0,
+      visit_type: (dto.visit_type as VisitDefinitionType) || VisitDefinitionType.FOLLOW_UP,
+    });
+    return await this.visitDefRepo.save(vd);
   }
 
   async submitToIec(studyId: string, dto: SubmitIecDto): Promise<IecSubmission> {

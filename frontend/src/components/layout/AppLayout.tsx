@@ -2,34 +2,28 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
+import { FONT_STACK, PARCHMENT, INK } from '../../design';
 
-export const AppLayout: React.FC = () => {
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#000000',
-        color: '#ffffff',
-        fontFamily:
-          "'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        WebkitFontSmoothing: 'antialiased',
-      }}
-    >
-      <TopNav />
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main
-          style={{
-            flex: 1,
-            padding: '40px 48px',
-            overflowY: 'auto',
-            minHeight: 'calc(100vh - 44px)',
-            maxWidth: 1200,
-          }}
-        >
-          <Outlet />
-        </main>
-      </div>
+export const AppLayout: React.FC = () => (
+  <div style={{
+    minHeight: '100vh',
+    background: PARCHMENT,
+    color: INK,
+    fontFamily: FONT_STACK,
+    WebkitFontSmoothing: 'antialiased',
+  }}>
+    <TopNav />
+    <div style={{ display: 'flex' }}>
+      <Sidebar />
+      <main style={{
+        flex: 1,
+        padding: '40px 48px',
+        minHeight: 'calc(100vh - 44px)',
+        maxWidth: 1280,
+        overflowX: 'hidden',
+      }}>
+        <Outlet />
+      </main>
     </div>
-  );
-};
+  </div>
+);

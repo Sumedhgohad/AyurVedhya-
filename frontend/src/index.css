@@ -2,433 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base Reset & Verge.md Foundations ─── */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* ═══════════════════════════════════════════════
+   VERGE.MD DESIGN SYSTEM — LIGHT THEME
+   Fonts: Inter (SF Pro substitute per verge.md §Note on Font Substitutes)
+   Weights: 300 / 400 / 600 / 700 only — 500 is ABSENT per spec
+   ═══════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
 
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "ss03"; /* rounded 'a' — Inter SF Pro approximation */
+  /* ss03 = rounded 'a' in Inter — approximates SF Pro per verge.md */
+  font-feature-settings: "ss03";
 }
 
 body {
   margin: 0;
-  /* SF Pro stack: resolves to real SF Pro on macOS/iOS, Inter fallback elsewhere */
+  /* SF Pro stack → Inter fallback per verge.md §Note on Font Substitutes */
   font-family: 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* verge.md: body copy at 17px NOT 16px — defines the brand's reading pace */
   font-size: 17px;
   font-weight: 400;
   line-height: 1.47;
+  /* Inter needs -0.01em nudge at display sizes; -0.374px at body per spec */
   letter-spacing: -0.374px;
-  background-color: #000000;
+  /* Light theme: parchment canvas */
+  background-color: #f5f5f7;
   color: #1d1d1f;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Typography Utilities ─── */
-.font-display {
-  font-family: 'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif;
+/* ── Selection ── */
+::selection { background: #0066cc; color: #ffffff; }
+
+/* ── Focus ring ── */
+:focus-visible { outline: 2px solid #0071e3; outline-offset: 2px; }
+
+/* ── Scrollbar — parchment-light ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f5f5f7; }
+::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #0066cc; }
+
+/* ════════════════════════════════
+   TYPOGRAPHY — exact verge.md scale
+   ════════════════════════════════ */
+
+/* 56px hero — "Apple tight" tracking */
+.vg-hero {
+  font-size: 56px; font-weight: 600;
+  line-height: 1.07; letter-spacing: -0.28px;
+  font-family: 'SF Pro Display', 'Inter', system-ui, sans-serif;
 }
 
-/* hero headline — the signature Apple tight tracking */
-.text-hero {
-  font-size: 56px;
-  font-weight: 600;
-  line-height: 1.07;
-  letter-spacing: -0.28px;
+/* 40px tile headline */
+.vg-display-lg {
+  font-size: 40px; font-weight: 600;
+  line-height: 1.10; letter-spacing: 0;
+  font-family: 'SF Pro Display', 'Inter', system-ui, sans-serif;
 }
 
-.text-display-lg {
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 1.10;
-  letter-spacing: 0;
+/* 34px section heading */
+.vg-display-md {
+  font-size: 34px; font-weight: 600;
+  line-height: 1.47; letter-spacing: -0.374px;
+  font-family: 'SF Pro Display', 'Inter', system-ui, sans-serif;
 }
 
-.text-display-md {
-  font-size: 34px;
-  font-weight: 600;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
+/* 21px tagline / sub-nav */
+.vg-tagline {
+  font-size: 21px; font-weight: 600;
+  line-height: 1.19; letter-spacing: 0.231px;
 }
 
-.text-tagline {
-  font-size: 21px;
-  font-weight: 600;
-  line-height: 1.19;
-  letter-spacing: 0.231px;
-}
+/* 17px body — the brand's reading pace */
+.vg-body     { font-size: 17px; font-weight: 400; line-height: 1.47; letter-spacing: -0.374px; }
+.vg-body-s   { font-size: 17px; font-weight: 600; line-height: 1.24; letter-spacing: -0.374px; }
 
-.text-body {
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
-}
+/* 14px caption */
+.vg-caption  { font-size: 14px; font-weight: 400; line-height: 1.43; letter-spacing: -0.224px; }
+.vg-caption-s{ font-size: 14px; font-weight: 600; line-height: 1.29; letter-spacing: -0.224px; }
 
-.text-body-strong {
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.24;
-  letter-spacing: -0.374px;
-}
+/* 12px nav / fine-print */
+.vg-nav      { font-size: 12px; font-weight: 400; line-height: 1.0;  letter-spacing: -0.12px; }
+.vg-fine     { font-size: 12px; font-weight: 400; line-height: 1.0;  letter-spacing: -0.12px; }
 
-.text-caption {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.43;
-  letter-spacing: -0.224px;
-}
+/* 10px micro */
+.vg-micro    { font-size: 10px; font-weight: 400; line-height: 1.3;  letter-spacing: -0.08px; }
 
-.text-caption-strong {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.29;
-  letter-spacing: -0.224px;
-}
-
-.text-nav-link {
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.0;
-  letter-spacing: -0.12px;
-}
-
-.text-fine-print {
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.0;
-  letter-spacing: -0.12px;
-}
-
-.text-micro {
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: -0.08px;
-}
-
-/* ─── Button System per verge.md ─── */
-/* Primary pill CTA — Action Blue */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #0066cc;
-  color: #ffffff;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
-  padding: 11px 22px;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.15s ease;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.btn-primary:active {
-  transform: scale(0.95);
-}
-.btn-primary:focus-visible {
-  outline: 2px solid #0071e3;
-  outline-offset: 2px;
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Secondary ghost pill */
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: transparent;
-  color: #0066cc;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
-  padding: 10px 22px;
-  border-radius: 9999px;
-  border: 1px solid #0066cc;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.btn-secondary:active {
-  transform: scale(0.95);
-}
-
-/* Dark surface secondary link (sky blue on dark tiles) */
-.btn-secondary-dark {
-  color: #2997ff;
-  border-color: #2997ff;
-}
-
-/* Utility compact button */
-.btn-utility {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: #1d1d1f;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.29;
-  letter-spacing: -0.224px;
-  padding: 8px 15px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-  white-space: nowrap;
-}
-.btn-utility:active {
-  transform: scale(0.95);
-}
-
-/* Small caption utility */
-.btn-caption {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: transparent;
-  color: #0066cc;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: -0.224px;
-  padding: 8px 14px;
-  border-radius: 11px;
-  border: 1px solid rgba(0,0,0,0.04);
-  background: #fafafc;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-.btn-caption:active {
-  transform: scale(0.95);
-}
-
-/* ─── Card system ─── */
-/* Utility card — store-card style */
-.card {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 18px;
-  padding: 24px;
-}
-
-/* Dark tile card */
-.card-dark {
-  background: #272729;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 18px;
-  padding: 24px;
-}
-
-/* ─── Form elements ─── */
-.input-field {
-  width: 100%;
-  background: #000000;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 11px;
-  padding: 9px 14px;
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.43;
-  letter-spacing: -0.224px;
-  outline: none;
-  transition: border-color 0.15s ease;
-  -webkit-appearance: none;
-}
-.input-field:focus {
-  border-color: #0066cc;
-}
-.input-field::placeholder {
+/* 11px overline label */
+.vg-label {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
   color: #7a7a7a;
 }
 
-.input-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: #7a7a7a;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-/* ─── Status badges — pill shape per verge.md ─── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 10px;
-  border-radius: 9999px;
-}
-
-.badge-blue {
-  background: rgba(0,102,204,0.12);
-  color: #2997ff;
-  border: 1px solid rgba(0,102,204,0.3);
-}
-
-.badge-green {
-  background: rgba(52,199,89,0.1);
-  color: #34c759;
-  border: 1px solid rgba(52,199,89,0.3);
-}
-
-.badge-red {
-  background: rgba(255,69,58,0.1);
-  color: #ff453a;
-  border: 1px solid rgba(255,69,58,0.3);
-}
-
-.badge-amber {
-  background: rgba(255,159,10,0.1);
-  color: #ff9f0a;
-  border: 1px solid rgba(255,159,10,0.3);
-}
-
-.badge-purple {
-  background: rgba(191,90,242,0.1);
-  color: #bf5af2;
-  border: 1px solid rgba(191,90,242,0.3);
-}
-
-/* ─── Score bar ─── */
-.score-bar-track {
-  height: 4px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 9999px;
-  overflow: hidden;
-}
-.score-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-}
-
-/* ─── Table ─── */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  letter-spacing: -0.224px;
-}
-.data-table thead tr {
-  background: #000000;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.data-table thead th {
-  padding: 12px 20px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #7a7a7a;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-align: left;
-  white-space: nowrap;
-}
-.data-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  transition: background 0.1s;
-}
-.data-table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
-}
-.data-table tbody td {
-  padding: 14px 20px;
-  color: #cccccc;
-  line-height: 1.47;
-}
-
-/* ─── Notifications ─── */
-.notify-success {
-  background: rgba(52,199,89,0.08);
-  border: 1px solid rgba(52,199,89,0.3);
-  color: #34c759;
-  border-radius: 14px;
-  padding: 14px 20px;
-  font-size: 14px;
-  letter-spacing: -0.224px;
-}
-.notify-error {
-  background: rgba(255,69,58,0.08);
-  border: 1px solid rgba(255,69,58,0.3);
-  color: #ff453a;
-  border-radius: 14px;
-  padding: 14px 20px;
-  font-size: 14px;
-  letter-spacing: -0.224px;
-}
-.notify-info {
-  background: rgba(0,102,204,0.08);
-  border: 1px solid rgba(0,102,204,0.25);
-  color: #2997ff;
-  border-radius: 14px;
-  padding: 14px 20px;
-  font-size: 14px;
-  letter-spacing: -0.224px;
-}
-
-/* ─── Scrollbar — near-black verge.md ─── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-::-webkit-scrollbar-thumb {
-  background: #272729;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #0066cc;
-}
-
-/* ─── Selection ─── */
-::selection {
-  background: #0066cc;
-  color: #ffffff;
-}
-
-/* ─── Focus ring ─── */
-:focus-visible {
-  outline: 2px solid #0071e3;
-  outline-offset: 2px;
-}
-
-/* ─── Animated ping (SAE clock indicator) ─── */
-@keyframes ping-sm {
-  75%, 100% { transform: scale(2); opacity: 0; }
-}
-.ping-sm {
-  animation: ping-sm 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* ─── Responsive helpers ─── */
-@media (max-width: 640px) {
-  .text-hero { font-size: 34px; }
-  .text-display-lg { font-size: 28px; }
-  .text-display-md { font-size: 24px; }
-}
-@media (max-width: 1068px) {
-  .text-hero { font-size: 40px; }
-}
+/* ════════════════════════════════
+   RESPONSIVE TYPOGRAPHY
+   ════════════════════════════════ */
+@media (max-width: 1068px) { .vg-hero { font-size: 40px; } }
+@media (max-width: 640px)  { .vg-hero { font-size: 34px; } .vg-display-lg { font-size: 28px; } }
+@media (max-width: 419px)  { .vg-hero { font-size: 28px; } }

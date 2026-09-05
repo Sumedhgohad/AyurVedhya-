@@ -1,232 +1,230 @@
 import React, { useState } from 'react';
 import { Study } from '../types';
-import { Users, CheckCircle2, Plus, Pill, RefreshCw, Award, Sparkles } from 'lucide-react';
-import { SignaturePad } from './SignaturePad';
-import { PrakritiQuestionnaireModal } from './PrakritiQuestionnaireModal';
 import { api } from '../api/client';
+import { Users, Package, CheckCircle2, Plus, RefreshCw } from 'lucide-react';
+import { SignaturePad } from './SignaturePad';
+import {
+  FONT_STACK, FONT_MONO, CANVAS, PARCHMENT, HAIRLINE,
+  INK, INK_48, INK_80, PRIMARY, PRIMARY_ON_DARK,
+  SUCCESS, DANGER, TILE_1, BORDER_DARK,
+  R_MD, R_LG, R_PILL,
+  TYPE, BADGE, btnPrimary, inputField, labelOverline,
+  PRODUCT_SHADOW,
+} from '../design';
 
-interface Props {
-  studies: Study[];
-  refreshData: () => void;
-}
+interface Props { studies: Study[]; refreshData: () => void; }
+
+/* ─ Shared sub-components ─ */
+const KPI: React.FC<{
+  label: string; value: React.ReactNode; sub: string;
+  accent?: string; icon?: React.ReactNode;
+}> = ({ label, value, sub, accent = INK, icon }) => (
+  <div style={{
+    background: CANVAS, border: `1px solid ${HAIRLINE}`,
+    borderRadius: R_LG, padding: 24,
+    display: 'flex', flexDirection: 'column', gap: 0,
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <span style={{ ...TYPE.label, color: INK_48 }}>{label}</span>
+      {icon}
+    </div>
+    <div style={{ fontSize: 36, fontWeight: 600, color: accent, letterSpacing: '-0.374px', lineHeight: 1.1, marginBottom: 6 }}>
+      {value}
+    </div>
+    <p style={{ ...TYPE.caption, color: INK_80, margin: 0 }}>{sub}</p>
+  </div>
+);
+
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div>
+    <label style={labelOverline()}>{label}</label>
+    {children}
+  </div>
+);
+
+const IS: React.CSSProperties = inputField(false);
 
 export const InvestigatorDashboard: React.FC<Props> = ({ studies, refreshData }) => {
   const [patientCode, setPatientCode] = useState('');
-  const [age, setAge] = useState('34');
+  const [age,   setAge]   = useState('34');
   const [prakriti, setPrakriti] = useState('Vata-Pitta');
   const [dietScore, setDietScore] = useState(90);
   const [signature, setSignature] = useState('');
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [isPrakritiModalOpen, setIsPrakritiModalOpen] = useState(false);
+  const [note, setNote] = useState<{ msg: string; ok: boolean } | null>(null);
 
-  const activeStudy = studies[0];
-  const currentBatch = activeStudy?.ip_batches?.[0];
+  const study = studies[0];
+  const batch = study?.ip_batches?.[0];
 
-  const handleEnrollPatient = async (e: React.FormEvent) => {
+  const handleEnroll = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeStudy) return;
+    if (!study) return;
     setLoading(true);
     try {
-      const code = patientCode || `SUBJ-AIIA-00${Math.floor(10 + Math.random() * 89)}`;
-
-      // 1. Enroll Participant
-      const patientRes = await api.post('/clinical/participants/enroll', {
-        study_id: activeStudy.id,
-        participant_code: code,
-        age: Number(age),
-        gender: 'Female',
+      const code = patientCode || `SUBJ-AIIA-${Math.floor(10 + Math.random() * 89)}`;
+      const pRes = await api.post('/clinical/participants/enroll', {
+        study_id: study.id, participant_code: code,
+        age: Number(age), gender: 'Female',
         enrollment_date: new Date().toISOString().split('T')[0],
         consent_type: signature ? 'DIGITAL_SIGNATURE' : 'WRITTEN',
         language_code: 'hi',
       });
-
-      // 2. Record Baseline Visit with Automatic Medicine Batch Deduction (60 Capsules)
       await api.post('/clinical/visits/record', {
-        participant_id: patientRes.data.id,
-        visit_number: 1,
-        visit_type: 'BASELINE',
+        participant_id: pRes.data.id,
+        visit_number: 1, visit_type: 'BASELINE',
         visit_date: new Date().toISOString().split('T')[0],
         prakriti_assessment: prakriti,
         nidan_panchaka_findings: 'Vata-Pitta Prakopa noted; chronic stress hetu present.',
         pathya_apathya_diet_score: Number(dietScore),
         namaste_terminology_code: 'NAMASTE_AYU_0842',
-        dispensed_batch_no: currentBatch?.batch_no || 'ASH-2026-B1',
-        quantity_dispensed: 60, // Deducts 60 from pharmacy inventory!
+        dispensed_batch_no: batch?.batch_no || 'ASH-2026-B1',
+        quantity_dispensed: 60,
       });
-
-      setNotification(`✅ Enrolled ${code}! 60 capsules deducted from Batch ${currentBatch?.batch_no}. Available Stock: ${(currentBatch?.current_stock || 60) - 60} Units.`);
-      setPatientCode('');
-      setSignature('');
+      setNote({ msg: `${pRes.data.participant_code} enrolled. 60 capsules deducted from Batch ${batch?.batch_no}.`, ok: true });
+      setPatientCode(''); setSignature('');
       refreshData();
     } catch (err: any) {
-      setNotification(`❌ Error: ${err.response?.data?.message || err.message}`);
-    } finally {
-      setLoading(false);
-    }
+      setNote({ msg: `Error: ${err.response?.data?.message || err.message}`, ok: false });
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="space-y-6">
-      {/* TOP METRIC KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Enrollment Target</span>
-            <Users className="w-5 h-5 text-blue-400" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">1</span>
-            <span className="text-sm text-slate-400">/ {activeStudy?.target_sample_size || 120} Subjects</span>
-          </div>
-          <div className="mt-3 bg-slate-800 h-2 rounded-full overflow-hidden">
-            <div className="bg-blue-500 h-full w-[2%]" />
-          </div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">GCP Drug Stock</span>
-            <Pill className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-emerald-400">{currentBatch?.current_stock || 0}</span>
-            <span className="text-xs text-slate-400">Units Available ({currentBatch?.batch_no})</span>
-          </div>
-          <p className="mt-2 text-[11px] text-slate-400">Auto-deducted on patient dispensation</p>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Open GCP Queries</span>
-            <CheckCircle2 className="w-5 h-5 text-purple-400" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">0</span>
-            <span className="text-xs text-purple-400 font-medium">100% Clean Audit Trail</span>
-          </div>
-          <p className="mt-2 text-[11px] text-slate-400">Verified in audit_integrity_db</p>
-        </div>
+      {/* ── KPI row ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+        <KPI label="Enrollment Progress"
+          value={`1 / ${study?.target_sample_size || 120}`}
+          sub="Subjects enrolled in active study"
+          accent={PRIMARY} icon={<Users size={16} color={PRIMARY} />}
+        />
+        <KPI label="CRF Completion"
+          value="100%" sub="Prakriti · Nidan Panchaka · Diet Score"
+          accent={SUCCESS} icon={<CheckCircle2 size={16} color={SUCCESS} />}
+        />
+        <KPI label="Open GCP Queries"
+          value="0" sub="All queries resolved with source audit"
+          accent={INK} icon={<Package size={16} color={INK_48} />}
+        />
       </div>
 
-      {notification && (
-        <div className="p-3 bg-slate-900 border border-slate-700 text-xs font-medium text-emerald-400 rounded-xl">
-          {notification}
+      {/* ── Notification ── */}
+      {note && (
+        <div style={{
+          padding: '13px 18px', borderRadius: R_MD,
+          border: `1px solid ${note.ok ? 'rgba(52,199,89,0.30)' : 'rgba(255,69,58,0.30)'}`,
+          background: note.ok ? 'rgba(52,199,89,0.06)' : 'rgba(255,69,58,0.06)',
+          fontSize: 14, color: note.ok ? SUCCESS : DANGER, letterSpacing: '-0.224px',
+        }}>
+          {note.msg}
         </div>
       )}
 
-      {/* ENROLLMENT & AYURVEDA CRF */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Study Overview & Pharmacy Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <div className="flex justify-between items-start">
+      {/* ── Study card + Enroll form ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+        {/* Study details — light canvas card */}
+        <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span className="text-xs font-bold bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded">
-                {activeStudy?.short_code}
+              <span style={{ ...BADGE.blue, marginBottom: 10, display: 'inline-flex' }}>
+                {study?.short_code || 'AIIA-ASH-2026'}
               </span>
-              <h2 className="text-base font-bold text-white mt-2">{activeStudy?.title}</h2>
-              <p className="text-xs text-slate-400 mt-1">Phase: {activeStudy?.phase} | Status: <strong className="text-emerald-400">{activeStudy?.status}</strong></p>
+              <h2 style={{ ...TYPE.bodyStrong, color: INK, margin: '10px 0 4px', fontSize: 17 }}>
+                {study?.title || 'Loading protocol…'}
+              </h2>
+              <p style={{ ...TYPE.caption, color: INK_48, margin: 0 }}>
+                {study?.phase} · Status: <span style={{ color: SUCCESS, fontWeight: 600 }}>{study?.status}</span>
+              </p>
             </div>
-            <button onClick={refreshData} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
-              <RefreshCw className="w-4 h-4" />
+            <button onClick={refreshData} title="Refresh"
+              style={{ width: 32, height: 32, borderRadius: 8, background: PARCHMENT, border: `1px solid ${HAIRLINE}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: INK_48, transition: 'transform 0.1s', flexShrink: 0 }}
+              onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              <RefreshCw size={13} />
             </button>
           </div>
 
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
-            <h3 className="font-bold text-slate-200 flex items-center gap-2">
-              <Award className="w-4 h-4 text-emerald-400" />
-              Investigational Product (AFI / API Standard)
-            </h3>
-            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
-              <div><span className="text-slate-500">Formulation:</span> <strong className="text-slate-300">{currentBatch?.formulation_name}</strong></div>
-              <div><span className="text-slate-500">Batch No:</span> <strong className="text-slate-300">{currentBatch?.batch_no}</strong></div>
-              <div><span className="text-slate-500">Standard:</span> <strong className="text-slate-300">{currentBatch?.afi_api_standard_ref}</strong></div>
-              <div><span className="text-slate-500">Warehouse Stock:</span> <strong className="text-emerald-400">{currentBatch?.current_stock} Units</strong></div>
+          {/* IP Batch grid — parchment inner box */}
+          <div style={{ background: PARCHMENT, border: `1px solid ${HAIRLINE}`, borderRadius: R_MD, padding: '16px 20px' }}>
+            <p style={{ ...TYPE.label, color: INK_48, margin: '0 0 12px' }}>
+              Investigational Product — AFI / API Standard
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
+              {[
+                { k: 'Formulation', v: batch?.formulation_name || 'Ashwagandha Ghanvati' },
+                { k: 'Batch No',    v: batch?.batch_no || 'ASH-2026-B1' },
+                { k: 'AFI Standard',v: batch?.afi_api_standard_ref || 'AFI-API-V2-882' },
+                { k: 'Stock',       v: `${batch?.current_stock ?? 450} units`, color: SUCCESS },
+              ].map(({ k, v, color }) => (
+                <div key={k}>
+                  <span style={{ fontSize: 11, color: INK_48 }}>{k}</span>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: color || INK, margin: '3px 0 0', letterSpacing: '-0.12px' }}>{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Enrollment progress bar */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ ...TYPE.label, color: INK_48 }}>Enrollment Progress</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: PRIMARY }}>
+                1 / {study?.target_sample_size || 120}
+              </span>
+            </div>
+            <div style={{ height: 5, background: 'rgba(0,0,0,0.08)', borderRadius: 9999, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.max(1, Math.round(1 / (study?.target_sample_size || 120) * 100))}%`, background: PRIMARY, borderRadius: 9999, transition: 'width 0.8s ease' }} />
             </div>
           </div>
         </div>
 
-        {/* Right: Patient Enrollment + Signature Form */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-            <Plus className="w-4 h-4 text-blue-400" />
-            Enroll Patient & Capture e-Consent
+        {/* Enrollment form — parchment card */}
+        <div style={{ background: CANVAS, border: `1px solid ${HAIRLINE}`, borderRadius: R_LG, padding: 28 }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, ...TYPE.bodyStrong, color: INK, margin: '0 0 20px' }}>
+            <Plus size={15} color={PRIMARY} />
+            Enroll Patient &amp; Baseline CRF
           </h3>
 
-          <form onSubmit={handleEnrollPatient} className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-slate-400 font-medium mb-1">Participant Code</label>
-                <input
-                  type="text"
-                  value={patientCode}
-                  onChange={(e) => setPatientCode(e.target.value)}
-                  placeholder="e.g. SUBJ-AIIA-002"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                />
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-slate-400 font-medium">Ayurvedic Prakriti</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsPrakritiModalOpen(true)}
-                    className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-lg transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" /> Diagnostic Tool
-                  </button>
-                </div>
-                <select
-                  value={prakriti}
-                  onChange={(e) => setPrakriti(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                >
-                  <option value="Vata-Pitta">Vata-Pitta (V:50%, P:35%, K:15%)</option>
-                  <option value="Kapha-Vata">Kapha-Vata (K:50%, V:35%, P:15%)</option>
-                  <option value="Pitta-Kapha">Pitta-Kapha (P:50%, K:35%, V:15%)</option>
-                  <option value="Tridoshaja">Tridoshaja (Balanced)</option>
-                  {prakriti && !['Vata-Pitta', 'Kapha-Vata', 'Pitta-Kapha', 'Tridoshaja'].includes(prakriti) && (
-                    <option value={prakriti}>{prakriti}</option>
-                  )}
-                </select>
-              </div>
+          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Participant Code">
+                <input style={IS} placeholder="e.g. SUBJ-AIIA-002" value={patientCode} onChange={e => setPatientCode(e.target.value)} />
+              </Field>
+              <Field label="Age">
+                <input type="number" style={IS} value={age} onChange={e => setAge(e.target.value)} />
+              </Field>
             </div>
+
+            <Field label="Ayurvedic Prakriti">
+              <select style={{ ...IS, appearance: 'none' }} value={prakriti} onChange={e => setPrakriti(e.target.value)}>
+                {['Vata-Pitta','Kapha-Vata','Pitta-Kapha','Tridoshaja'].map(v => <option key={v}>{v}</option>)}
+              </select>
+            </Field>
 
             <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-400 font-medium">Pathya-Apathya (Diet/Lifestyle) Adherence</span>
-                <span className="text-emerald-400 font-bold">{dietScore}% Compliance</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={labelOverline()}>Pathya-Apathya Diet Score</label>
+                <span style={{ fontSize: 13, fontWeight: 600, color: SUCCESS }}>{dietScore}%</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={dietScore}
-                onChange={(e) => setDietScore(Number(e.target.value))}
-                className="w-full accent-emerald-500"
-              />
+              <input type="range" min="0" max="100" value={dietScore}
+                onChange={e => setDietScore(Number(e.target.value))}
+                style={{ width: '100%', accentColor: PRIMARY }} />
             </div>
 
-            {/* DIGITAL SIGNATURE CANVAS */}
-            <SignaturePad onSignatureCapture={(b64) => setSignature(b64)} />
+            <SignaturePad onSignatureCapture={setSignature} />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-blue-900/30 disabled:opacity-50"
+            <button type="submit" disabled={loading}
+              style={{ ...btnPrimary(loading), width: '100%', marginTop: 4 }}
+              onMouseDown={e => !loading && (e.currentTarget.style.transform = 'scale(0.95)')}
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
             >
-              {loading ? 'Processing Transaction...' : 'Enroll, Sign & Dispense Medicine'}
+              {loading ? 'Processing…' : 'Enroll & Dispense Medicine'}
             </button>
           </form>
         </div>
       </div>
-
-      {/* PRAKRITI QUESTIONNAIRE MODAL */}
-      <PrakritiQuestionnaireModal
-        isOpen={isPrakritiModalOpen}
-        onClose={() => setIsPrakritiModalOpen(false)}
-        onComplete={(prakritiSummary) => setPrakriti(prakritiSummary)}
-      />
     </div>
   );
 };

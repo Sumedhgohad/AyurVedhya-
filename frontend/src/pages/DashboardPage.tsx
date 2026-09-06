@@ -59,6 +59,7 @@ export const DashboardPage: React.FC = () => {
         <InvestigatorDashboard
           studies={studies}
           participants={participants}
+          saeClocks={saeClocks}
           refreshData={loadData}
         />
       )}

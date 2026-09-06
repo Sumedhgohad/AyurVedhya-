@@ -9,8 +9,9 @@ import { INK, INK_48, PRIMARY, TYPE } from '../design';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [studies, setStudies]       = useState<Study[]>([]);
-  const [saeClocks, setSaeClocks]   = useState<SaeClock[]>([]);
+  const [studies, setStudies]         = useState<Study[]>([]);
+  const [saeClocks, setSaeClocks]     = useState<SaeClock[]>([]);
+  const [participants, setParticipants] = useState<any[]>([]);
 
   const loadData = async () => {
     try {
@@ -20,6 +21,18 @@ export const DashboardPage: React.FC = () => {
       ]);
       setStudies(sRes.data);
       setSaeClocks(saeRes.data);
+
+      // Fetch real participant count for the active study
+      const activeStudy = sRes.data[0];
+      if (activeStudy?.id) {
+        try {
+          const pRes = await api.get(`/clinical/participants/study/${activeStudy.id}`);
+          setParticipants(Array.isArray(pRes.data) ? pRes.data : []);
+        } catch {
+          // endpoint may not exist yet — degrade gracefully
+          setParticipants([]);
+        }
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -42,9 +55,19 @@ export const DashboardPage: React.FC = () => {
         </p>
       </div>
 
-      {user?.role === 'ROLE_INVESTIGATOR'      && <InvestigatorDashboard studies={studies} refreshData={loadData} />}
-      {user?.role === 'ROLE_COMPLIANCE_OFFICER'&& <ComplianceDashboard   studies={studies} saeClocks={saeClocks} refreshData={loadData} />}
-      {user?.role === 'ROLE_LEADERSHIP'        && <LeadershipDashboard   studies={studies} />}
+      {user?.role === 'ROLE_INVESTIGATOR' && (
+        <InvestigatorDashboard
+          studies={studies}
+          participants={participants}
+          refreshData={loadData}
+        />
+      )}
+      {user?.role === 'ROLE_COMPLIANCE_OFFICER' && (
+        <ComplianceDashboard studies={studies} saeClocks={saeClocks} refreshData={loadData} />
+      )}
+      {user?.role === 'ROLE_LEADERSHIP' && (
+        <LeadershipDashboard studies={studies} />
+      )}
     </div>
   );
 };

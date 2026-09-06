@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -9,8 +9,9 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // 🔒 ENFORCE GLOBAL JWT AUTHENTICATION GUARD ON ALL ROUTES
-  app.useGlobalGuards(new JwtAuthGuard());
+  // 🔒 ENFORCE GLOBAL JWT AUTHENTICATION & ROLE GUARD ON ALL ROUTES
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   app.enableCors();
 

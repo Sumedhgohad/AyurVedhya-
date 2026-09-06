@@ -3,8 +3,11 @@ import { Study } from './study.entity';
 import { VisitDefinition } from './visit-definition.entity';
 
 export enum ArmType {
+  EXPERIMENTAL = 'EXPERIMENTAL',
   INTERVENTION = 'INTERVENTION',
+  ACTIVE_COMPARATOR = 'ACTIVE_COMPARATOR',
   COMPARATOR = 'COMPARATOR',
+  PLACEBO_COMPARATOR = 'PLACEBO_COMPARATOR',
   PLACEBO = 'PLACEBO',
   OPEN_LABEL = 'OPEN_LABEL',
 }
@@ -23,12 +26,8 @@ export class StudyArm {
   @Column({ length: 150 })
   label: string; // e.g. Intervention - Ashwagandha 500mg
 
-  @Column({
-    type: 'enum',
-    enum: ArmType,
-    default: ArmType.INTERVENTION,
-  })
-  arm_type: ArmType;
+  @Column({ type: 'varchar', length: 50, default: 'EXPERIMENTAL' })
+  arm_type: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;

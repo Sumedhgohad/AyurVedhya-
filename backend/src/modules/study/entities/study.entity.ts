@@ -48,6 +48,14 @@ export class Study {
   @Column({ type: 'date', nullable: true })
   planned_end_date: string;
 
+  /** Set when study transitions to CLOSED — statutory 30-day CTRI notification deadline */
+  @Column({ type: 'date', nullable: true })
+  ctri_completion_deadline: string;
+
+  /** Mandatory GCP justification recorded when study is TERMINATED */
+  @Column({ type: 'text', nullable: true })
+  termination_reason: string;
+
   @OneToMany(() => StudyIpBatch, (batch) => batch.study)
   ip_batches: StudyIpBatch[];
 

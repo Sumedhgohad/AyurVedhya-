@@ -18,16 +18,18 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
 
-    if (!user || !user.role) {
+    if (!user || (!Array.isArray(user.roles) && !user.role)) {
       throw new ForbiddenException('GCP SEPARATION OF DUTIES VIOLATION: Access denied. User role not established.');
     }
 
-    const hasRole = requiredRoles.includes(user.role);
+    const userRoles: string[] = Array.isArray(user.roles) ? user.roles : [user.role];
+    const hasRole = requiredRoles.some((r) => userRoles.includes(r));
+
     if (!hasRole) {
       throw new ForbiddenException(
         `GCP SEPARATION OF DUTIES VIOLATION: Access restricted to role(s): [${requiredRoles.join(
           ', ',
-        )}]. Your active role is '${user.role}'.`,
+        )}]. Your active role is '${user.role || userRoles[0]}'.`,
       );
     }
 

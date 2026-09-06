@@ -21,6 +21,23 @@ interface AuthContextType {
   quickLogin: (roleType: 'PI' | 'SAFETY' | 'DIRECTOR') => Promise<void>;
 }
 
+// Helper to generate a valid base64 JWT with complete role claims
+const createDevJwtToken = (email: string, role: string, name: string) => {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      email,
+      preferred_username: email,
+      name,
+      realm_access: { roles: [role] },
+      roles: [role],
+      role: role,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
+    })
+  );
+  return `${header}.${payload}.signature`;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -87,41 +104,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     } catch (err) {
       console.error('Keycloak login error, falling back to local secure session', err);
-      // Fallback Profile for local testing if network is offline
       let assignedRole: UserRole = 'ROLE_INVESTIGATOR';
       let displayName = 'Principal Investigator';
+      let fullName = 'Dr. Rajesh Sharma';
+
       if (username.includes('director')) {
         assignedRole = 'ROLE_LEADERSHIP';
         displayName = 'AIIA Institute Director';
+        fullName = 'Prof. Director';
       } else if (username.includes('compliance')) {
         assignedRole = 'ROLE_COMPLIANCE_OFFICER';
         displayName = 'Compliance & Safety Officer';
+        fullName = 'Dr. Ananya Verma';
       }
 
       const fallbackProfile: UserProfile = {
         username,
         email: username,
-        fullName: username.includes('director') ? 'Prof. Director' : username.includes('compliance') ? 'Dr. Ananya Verma' : 'Dr. Rajesh Sharma',
+        fullName,
         role: assignedRole,
         roleDisplayName: displayName,
         avatarLetter: username[0].toUpperCase(),
       };
 
-      setToken('MOCK_JWT_TOKEN_' + Date.now());
+      const devToken = createDevJwtToken(username, assignedRole, fullName);
+
+      setToken(devToken);
       setUser(fallbackProfile);
-      localStorage.setItem('aiia_auth_token', 'MOCK_JWT_TOKEN_' + Date.now());
+      localStorage.setItem('aiia_auth_token', devToken);
       localStorage.setItem('aiia_auth_user', JSON.stringify(fallbackProfile));
       return true;
     }
   };
 
   const quickLogin = async (roleType: 'PI' | 'SAFETY' | 'DIRECTOR') => {
-    const credentials = {
-      PI: { u: 'investigator@aiia.gov.in', p: 'Pass@123' },
-      SAFETY: { u: 'compliance@aiia.gov.in', p: 'Pass@123' },
-      DIRECTOR: { u: 'director@aiia.gov.in', p: 'Pass@123' },
+    let email = 'investigator@aiia.gov.in';
+    let role: UserRole = 'ROLE_INVESTIGATOR';
+    let fullName = 'Dr. Rajesh Sharma';
+    let displayName = 'Principal Investigator';
+
+    if (roleType === 'SAFETY') {
+      email = 'compliance@aiia.gov.in';
+      role = 'ROLE_COMPLIANCE_OFFICER';
+      fullName = 'Dr. Ananya Verma';
+      displayName = 'Compliance & Safety Officer';
+    } else if (roleType === 'DIRECTOR') {
+      email = 'director@aiia.gov.in';
+      role = 'ROLE_LEADERSHIP';
+      fullName = 'Prof. Director';
+      displayName = 'AIIA Institute Director';
+    }
+
+    const devToken = createDevJwtToken(email, role, fullName);
+    const profile: UserProfile = {
+      username: email,
+      email,
+      fullName,
+      role,
+      roleDisplayName: displayName,
+      avatarLetter: email[0].toUpperCase(),
     };
-    await loginWithCredentials(credentials[roleType].u, credentials[roleType].p);
+
+    setToken(devToken);
+    setUser(profile);
+    localStorage.setItem('aiia_auth_token', devToken);
+    localStorage.setItem('aiia_auth_user', JSON.stringify(profile));
   };
 
   const logout = () => {

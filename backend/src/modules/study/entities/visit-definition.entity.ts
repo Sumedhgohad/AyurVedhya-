@@ -28,12 +28,8 @@ export class VisitDefinition {
   @Column({ type: 'int', default: 0 })
   window_plus: number; // e.g. +2 days tolerance
 
-  @Column({
-    type: 'enum',
-    enum: VisitDefinitionType,
-    default: VisitDefinitionType.FOLLOW_UP,
-  })
-  visit_type: VisitDefinitionType;
+  @Column({ type: 'varchar', length: 50, default: 'FOLLOW_UP' })
+  visit_type: string;
 
   @Column({ type: 'boolean', default: true })
   is_mandatory: boolean;

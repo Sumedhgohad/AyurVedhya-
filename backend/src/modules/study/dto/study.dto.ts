@@ -29,6 +29,12 @@ export class CreateStudyDto {
   @IsOptional()
   @IsString()
   planned_end_date?: string;
+
+  @IsOptional()
+  arms?: any[];
+
+  @IsOptional()
+  visitSchedule?: any[];
 }
 
 export class SubmitIecDto {
@@ -106,6 +112,12 @@ export class CreateStudyArmDto {
   @IsOptional()
   @IsString()
   description?: string;
+}
+
+export class TerminateStudyDto {
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
 }
 
 export class CreateVisitDefinitionDto {

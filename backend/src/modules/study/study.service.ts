@@ -7,6 +7,8 @@ import { IecSubmission, IecDecisionStatus } from './entities/iec-submission.enti
 import { CtriRegistration } from './entities/ctri-registration.entity';
 import { StudyArm, ArmType } from './entities/study-arm.entity';
 import { VisitDefinition, VisitDefinitionType } from './entities/visit-definition.entity';
+import { AuditEvent, AuditAction } from '../audit/entities/audit-event.entity';
+import { SystemAlert, AlertCategory, AlertSeverity } from '../alerts/entities/system-alert.entity';
 import {
   CreateStudyDto,
   SubmitIecDto,
@@ -15,6 +17,7 @@ import {
   CreateIpBatchDto,
   CreateStudyArmDto,
   CreateVisitDefinitionDto,
+  TerminateStudyDto,
 } from './dto/study.dto';
 
 @Injectable()
@@ -26,11 +29,56 @@ export class StudyService {
     @InjectRepository(CtriRegistration, 'studyConnection') private ctriRepo: Repository<CtriRegistration>,
     @InjectRepository(StudyArm, 'studyConnection') private armRepo: Repository<StudyArm>,
     @InjectRepository(VisitDefinition, 'studyConnection') private visitDefRepo: Repository<VisitDefinition>,
+    @InjectRepository(AuditEvent, 'auditConnection') private auditRepo: Repository<AuditEvent>,
+    @InjectRepository(SystemAlert, 'auditConnection') private alertRepo: Repository<SystemAlert>,
   ) {}
 
   async createStudy(dto: CreateStudyDto): Promise<Study> {
     const study = this.studyRepo.create(dto);
-    return await this.studyRepo.save(study);
+    const savedStudy = await this.studyRepo.save(study);
+
+    if (dto.arms && Array.isArray(dto.arms) && dto.arms.length > 0) {
+      await this.saveProtocolStructure(savedStudy.id, {
+        arms: dto.arms,
+        visitSchedule: dto.visitSchedule || [],
+      });
+    }
+
+    return await this.getStudyById(savedStudy.id);
+  }
+
+  async saveProtocolStructure(studyId: string, dto: { arms: any[]; visitSchedule: any[] }): Promise<Study> {
+    const study = await this.getStudyById(studyId);
+
+    if (dto.arms && Array.isArray(dto.arms) && dto.arms.length > 0) {
+      for (const armDto of dto.arms) {
+        const armCode = armDto.arm_code || armDto.arm_name?.split(' ')[0] || `ARM-${armDto.id || Math.floor(Math.random() * 100)}`;
+        const arm = this.armRepo.create({
+          study,
+          arm_code: armCode,
+          label: armDto.arm_name || armDto.label || 'Study Arm',
+          arm_type: armDto.arm_type || 'EXPERIMENTAL',
+          description: armDto.description || `Ratio: ${armDto.allocation_ratio || '1:1'}`,
+        });
+        const savedArm = await this.armRepo.save(arm);
+
+        if (dto.visitSchedule && Array.isArray(dto.visitSchedule) && dto.visitSchedule.length > 0) {
+          for (const vDto of dto.visitSchedule) {
+            const vd = this.visitDefRepo.create({
+              arm: savedArm,
+              visit_name: vDto.visit_name,
+              visit_day: Number(vDto.target_day ?? vDto.visit_day ?? 0),
+              window_minus: Number(vDto.window_tolerance ?? vDto.window_minus ?? 0),
+              window_plus: Number(vDto.window_tolerance ?? vDto.window_plus ?? 0),
+              visit_type: vDto.visit_type || 'FOLLOW_UP',
+            });
+            await this.visitDefRepo.save(vd);
+          }
+        }
+      }
+    }
+
+    return await this.getStudyById(studyId);
   }
 
   async getAllStudies(): Promise<Study[]> {
@@ -187,5 +235,123 @@ export class StudyService {
 
     batch.current_stock -= quantityToDeduct;
     return await this.ipRepo.save(batch);
+  }
+
+  // ─── Lifecycle: Data Lock ───────────────────────────────────────────────────
+  // Guard: ENROLLING or ONGOING → DATA_LOCK
+  async dataLockStudy(studyId: string): Promise<Study> {
+    const study = await this.getStudyById(studyId);
+
+    const allowedStates = [StudyStatus.ENROLLING, StudyStatus.ONGOING];
+    if (!allowedStates.includes(study.status)) {
+      throw new BadRequestException(
+        `Data Lock is only permitted for studies in ENROLLING or ONGOING state. Current state: ${study.status}`,
+      );
+    }
+
+    await this.studyRepo.update(studyId, { status: StudyStatus.DATA_LOCK });
+
+    // Immutable audit event — append-only in audit_integrity_db
+    await this.auditRepo.save(
+      this.auditRepo.create({
+        user_email: 'system@aiia.gov.in',
+        user_role: 'SYSTEM',
+        action: AuditAction.STATUS_CHANGE,
+        entity_type: 'STUDY',
+        entity_id: studyId,
+        old_values: { status: study.status },
+        new_values: { status: StudyStatus.DATA_LOCK },
+        reason: 'Study database locked for statistical analysis. No further CRF edits permitted.',
+        ip_address: '127.0.0.1',
+      }),
+    );
+
+    return this.getStudyById(studyId);
+  }
+
+  // ─── Lifecycle: Complete Study ──────────────────────────────────────────────
+  // Guard: DATA_LOCK → CLOSED; calculates statutory 30-day CTRI closeout deadline
+  async completeStudy(studyId: string): Promise<Study> {
+    const study = await this.getStudyById(studyId);
+
+    if (study.status !== StudyStatus.DATA_LOCK) {
+      throw new BadRequestException(
+        `Study can only be completed from DATA_LOCK state. Current state: ${study.status}`,
+      );
+    }
+
+    // Statutory 30-day CTRI closeout notification window
+    const closeoutDeadline = new Date();
+    closeoutDeadline.setDate(closeoutDeadline.getDate() + 30);
+    const ctriCompletionDeadline = closeoutDeadline.toISOString().split('T')[0];
+
+    await this.studyRepo.update(studyId, {
+      status: StudyStatus.CLOSED,
+      ctri_completion_deadline: ctriCompletionDeadline,
+    });
+
+    // Immutable audit event
+    await this.auditRepo.save(
+      this.auditRepo.create({
+        user_email: 'system@aiia.gov.in',
+        user_role: 'SYSTEM',
+        action: AuditAction.STATUS_CHANGE,
+        entity_type: 'STUDY',
+        entity_id: studyId,
+        old_values: { status: StudyStatus.DATA_LOCK },
+        new_values: { status: StudyStatus.CLOSED, ctri_completion_deadline: ctriCompletionDeadline },
+        reason: `Trial completed successfully. 30-day CTRI notification clock started. Deadline: ${ctriCompletionDeadline}`,
+        ip_address: '127.0.0.1',
+      }),
+    );
+
+    return this.getStudyById(studyId);
+  }
+
+  // ─── Lifecycle: Premature Termination ──────────────────────────────────────
+  // Requires mandatory GCP justification reason; raises emergency alert to IEC & Leadership
+  async terminateStudy(studyId: string, dto: TerminateStudyDto): Promise<Study> {
+    const study = await this.getStudyById(studyId);
+
+    const nonTerminableStates = [StudyStatus.CLOSED, StudyStatus.TERMINATED];
+    if (nonTerminableStates.includes(study.status)) {
+      throw new BadRequestException(
+        `Study is already in a terminal state (${study.status}) and cannot be terminated again.`,
+      );
+    }
+
+    await this.studyRepo.update(studyId, {
+      status: StudyStatus.TERMINATED,
+      termination_reason: dto.reason,
+    });
+
+    // Immutable audit event with mandatory reason
+    await this.auditRepo.save(
+      this.auditRepo.create({
+        user_email: 'system@aiia.gov.in',
+        user_role: 'SYSTEM',
+        action: AuditAction.STATUS_CHANGE,
+        entity_type: 'STUDY',
+        entity_id: studyId,
+        old_values: { status: study.status },
+        new_values: { status: StudyStatus.TERMINATED, termination_reason: dto.reason },
+        reason: dto.reason,
+        ip_address: '127.0.0.1',
+      }),
+    );
+
+    // Emergency notification alerts to Ethics Committee and Leadership dashboard
+    await this.alertRepo.save(
+      this.alertRepo.create({
+        category: AlertCategory.SAE_EMERGENCY,
+        severity: AlertSeverity.CRITICAL,
+        title: `URGENT: Clinical Trial ${study.short_code} Prematurely Terminated`,
+        message: `Study '${study.title}' (${study.short_code}) has been prematurely terminated. GCP Justification: ${dto.reason}. Immediate Ethics Committee review required.`,
+        study_id: studyId,
+        study_code: study.short_code,
+      }),
+    );
+
+    return this.getStudyById(studyId);
   }
 }

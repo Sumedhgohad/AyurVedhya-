@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param } from '@nestjs/common';
 import { SafetyService } from './safety.service';
 import { LogAdverseEventDto } from './dto/safety.dto';
 
@@ -19,5 +19,10 @@ export class SafetyController {
   @Get('export/npvcc/:id')
   generateNpvccReport(@Param('id') id: string) {
     return this.safetyService.generateNpvccReport(id);
+  }
+
+  @Patch('sae/:id/mark-reported')
+  markSaeAsReported(@Param('id') id: string) {
+    return this.safetyService.markSaeAsReported(id);
   }
 }

@@ -87,6 +87,31 @@ export class SafetyService {
     });
   }
 
+  // Mark SAE as dispatched to NPvCC — stops the 24-hour statutory clock
+  async markSaeAsReported(saeId: string): Promise<AdverseEvent> {
+    const sae = await this.aeRepo.findOne({ where: { id: saeId } });
+    if (!sae) throw new NotFoundException('SAE record not found.');
+
+    const now = new Date();
+    sae.is_reported_to_npvcc = true;
+    sae.npvcc_reported_at = now;
+
+    const saved = await this.aeRepo.save(sae);
+
+    // Immutable audit event — permanent statutory fulfillment record
+    await this.auditService.logEvent({
+      user_email: 'compliance@aiia.gov.in',
+      user_role: 'ROLE_COMPLIANCE_OFFICER',
+      action: AuditAction.UPDATE,
+      entity_type: 'ADVERSE_EVENT',
+      entity_id: sae.id,
+      new_values: { is_reported_to_npvcc: true, npvcc_reported_at: now.toISOString() },
+      reason: `STATUTORY FULFILLMENT: 24-Hour SAE initial report dispatched to NPvCC and Ethics Committee on ${now.toISOString()}`,
+    });
+
+    return saved;
+  }
+
   // Generate official Ministry of Ayush NPvCC Reporting Data
   async generateNpvccReport(aeId: string): Promise<any> {
     const ae = await this.aeRepo.findOne({ where: { id: aeId } });

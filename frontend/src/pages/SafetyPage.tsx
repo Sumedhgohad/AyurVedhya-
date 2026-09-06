@@ -128,6 +128,22 @@ export const SafetyPage: React.FC = () => {
                     <button onClick={()=>dlNpvcc(sae.id)} style={{ display:'flex', alignItems:'center', gap:7, background: DANGER, color:'#ffffff', border:'none', borderRadius: R_PILL, padding:'11px 22px', fontSize:14, fontWeight:600, cursor:'pointer', transition:'transform 0.1s', fontFamily:'inherit' }} onMouseDown={e=>(e.currentTarget.style.transform='scale(0.95)')} onMouseUp={e=>(e.currentTarget.style.transform='scale(1)')}>
                       <Download size={13}/> NPvCC Report
                     </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await api.patch(`/safety/sae/${sae.id}/mark-reported`);
+                          setNote('Statutory 24-hour reporting requirement completed and locked into the immutable audit trail.');
+                          load();
+                        } catch (err: any) {
+                          setNote(`Error: ${err.response?.data?.message || err.message}`);
+                        }
+                      }}
+                      style={{ display:'flex', alignItems:'center', gap:7, background: SUCCESS, color:'#ffffff', border:'none', borderRadius: R_PILL, padding:'11px 22px', fontSize:14, fontWeight:600, cursor:'pointer', transition:'transform 0.1s', fontFamily:'inherit' }}
+                      onMouseDown={e=>(e.currentTarget.style.transform='scale(0.95)')}
+                      onMouseUp={e=>(e.currentTarget.style.transform='scale(1)')}
+                    >
+                      <CheckCircle2 size={13}/> Confirm Dispatch &amp; Close Clock
+                    </button>
                   </div>
                 </div>
               </div>

@@ -210,6 +210,14 @@ export class DocumentsService implements OnModuleInit {
     return savedReceipt;
   }
 
+  // List all document receipts for a study
+  async getDocumentsByStudy(studyId: string): Promise<DocumentReceipt[]> {
+    return this.receiptRepo.find({
+      where: { study_id: studyId },
+      order: { uploaded_at: 'DESC' },
+    });
+  }
+
   // Tamper-Proof Verification: Re-downloads file from MinIO, re-hashes, and compares
   async verifyDocumentIntegrity(receiptId: string): Promise<any> {
     const receipt = await this.receiptRepo.findOne({

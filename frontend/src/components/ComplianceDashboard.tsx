@@ -21,7 +21,7 @@ const KPI: React.FC<{ label: string; value: React.ReactNode; sub: string; accent
   </div>
 );
 
-export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks }) => {
+export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks, refreshData }) => {
   const [downloading, setDownloading] = useState(false);
   const study = studies[0];
   const iec = study?.iec_submissions?.find(s => s.decision === 'APPROVED');
@@ -125,6 +125,19 @@ export const ComplianceDashboard: React.FC<Props> = ({ studies, saeClocks }) => 
                 onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 <Download size={13} /> NPvCC Report
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await api.patch(`/safety/sae/${clock.id}/mark-reported`);
+                    refreshData();
+                  } catch { alert('Failed to mark SAE as reported. Please try again.'); }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, background: SUCCESS, color: '#ffffff', border: 'none', borderRadius: R_PILL, padding: '11px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.224px', transition: 'transform 0.1s', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
+                onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.95)')}
+                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                <CheckCircle2 size={13} /> Confirm Dispatch &amp; Close Clock
               </button>
             </div>
           </div>

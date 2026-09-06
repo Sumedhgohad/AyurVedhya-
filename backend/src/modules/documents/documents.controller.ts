@@ -25,6 +25,11 @@ export class DocumentsController {
     return this.docService.uploadAndHashDocument(studyId, documentType, uploadedBy || 'investigator@aiia.gov.in', file);
   }
 
+  @Get('study/:studyId')
+  getDocumentsByStudy(@Param('studyId') studyId: string) {
+    return this.docService.getDocumentsByStudy(studyId);
+  }
+
   @Get('verify/:id')
   verifyDocument(@Param('id') id: string) {
     return this.docService.verifyDocumentIntegrity(id);

@@ -42,4 +42,9 @@ export class ClinicalController {
   logDeviation(@Body() dto: LogDeviationDto) {
     return this.clinicalService.logDeviation(dto);
   }
+
+  @Get('deviations/study/:studyId')
+  getDeviationsByStudy(@Param('studyId') studyId: string) {
+    return this.clinicalService.getDeviationsByStudy(studyId);
+  }
 }

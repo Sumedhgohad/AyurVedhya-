@@ -62,6 +62,14 @@ export class SafetyService {
     return savedAe;
   }
 
+  // Get all adverse events for a specific study (for dashboard aggregate view)
+  async getAesByStudy(studyId: string): Promise<AdverseEvent[]> {
+    return await this.aeRepo.find({
+      where: { study_id: studyId },
+      order: { created_at: 'DESC' },
+    });
+  }
+
   // Get active countdown clocks for Safety Officers & Leadership
   async getActiveSaeClocks(): Promise<any[]> {
     const activeSaes = await this.aeRepo.find({

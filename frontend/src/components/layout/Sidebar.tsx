@@ -12,12 +12,12 @@ import {
 
 const NAV = [
   { label: 'Overview & KPIs',           path: '/dashboard',       icon: LayoutDashboard, roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
-  { label: 'Trial Protocols & Batches', path: '/studies',         icon: FolderKanban,    roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
-  { label: 'Patients & Hybrid CRFs',    path: '/participants',    icon: Users,           roles: ['ROLE_INVESTIGATOR','ROLE_LEADERSHIP'] },
-  { label: '24h SAE Safety Center',     path: '/safety',          icon: ShieldAlert,     roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'], badge: 'NDCT 24h' },
+  { label: 'Trial Setup',                path: '/studies',         icon: FolderKanban,    roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
+  { label: 'Subject Registration',    path: '/participants',    icon: Users,           roles: ['ROLE_INVESTIGATOR','ROLE_LEADERSHIP'] },
+  { label: 'SAE Safety Center',         path: '/safety',          icon: ShieldAlert,     roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP']},
   { label: 'Ethics (IEC) & CTRI',       path: '/ethics-ctri',     icon: FileCheck,       roles: ['ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
-  { label: 'Document Vault & Hashes',   path: '/documents',       icon: HardDrive,       roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
-  { label: 'ALCOA+ Audit Explorer',     path: '/audit-trail',     icon: History,         roles: ['ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
+  { label: 'Document Vault',   path: '/documents',       icon: HardDrive,       roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
+  { label: 'Audit Explorer',     path: '/audit-trail',     icon: History,         roles: ['ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
   { label: 'FHIR & CDISC Export',       path: '/interoperability',icon: Share2,          roles: ['ROLE_INVESTIGATOR','ROLE_COMPLIANCE_OFFICER','ROLE_LEADERSHIP'] },
 ];
 
@@ -87,16 +87,6 @@ export const Sidebar: React.FC = () => {
                 <item.icon size={14} style={{ flexShrink: 0 }} />
                 <span style={{ lineHeight: 1.3 }}>{item.label}</span>
               </span>
-              {item.badge && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, color: '#ffffff',
-                  background: DANGER,
-                  padding: '2px 7px', borderRadius: 9999,
-                  letterSpacing: '0.04em', textTransform: 'uppercase', flexShrink: 0,
-                }}>
-                  {item.badge}
-                </span>
-              )}
             </NavLink>
           ))}
         </nav>

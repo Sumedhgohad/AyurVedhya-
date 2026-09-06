@@ -9,9 +9,11 @@ import { INK, INK_48, PRIMARY, TYPE } from '../design';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [studies, setStudies]         = useState<Study[]>([]);
-  const [saeClocks, setSaeClocks]     = useState<SaeClock[]>([]);
+  const [studies,      setStudies]      = useState<Study[]>([]);
+  const [saeClocks,    setSaeClocks]    = useState<SaeClock[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [allAes,       setAllAes]       = useState<any[]>([]);
+  const [deviations,   setDeviations]   = useState<any[]>([]);
 
   const loadData = async () => {
     try {
@@ -22,16 +24,17 @@ export const DashboardPage: React.FC = () => {
       setStudies(sRes.data);
       setSaeClocks(saeRes.data);
 
-      // Fetch real participant count for the active study
       const activeStudy = sRes.data[0];
       if (activeStudy?.id) {
-        try {
-          const pRes = await api.get(`/clinical/participants/study/${activeStudy.id}`);
-          setParticipants(Array.isArray(pRes.data) ? pRes.data : []);
-        } catch {
-          // endpoint may not exist yet — degrade gracefully
-          setParticipants([]);
-        }
+        // Fetch supporting data for compliance dashboard — degrade gracefully
+        const [pRes, aeRes, devRes] = await Promise.allSettled([
+          api.get(`/clinical/participants/study/${activeStudy.id}`),
+          api.get(`/safety/ae/study/${activeStudy.id}`),
+          api.get(`/clinical/deviations/study/${activeStudy.id}`),
+        ]);
+        setParticipants(pRes.status === 'fulfilled' && Array.isArray(pRes.value.data) ? pRes.value.data : []);
+        setAllAes(aeRes.status === 'fulfilled' && Array.isArray(aeRes.value.data) ? aeRes.value.data : []);
+        setDeviations(devRes.status === 'fulfilled' && Array.isArray(devRes.value.data) ? devRes.value.data : []);
       }
     } catch (err) { console.error(err); }
   };
@@ -44,7 +47,6 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {/* Page title */}
       <div>
         <h1 style={{ ...TYPE.displayMd, color: INK, margin: '0 0 6px', fontFamily: "'SF Pro Display','Inter',system-ui,sans-serif" }}>
           Welcome, {user?.fullName}
@@ -64,7 +66,13 @@ export const DashboardPage: React.FC = () => {
         />
       )}
       {user?.role === 'ROLE_COMPLIANCE_OFFICER' && (
-        <ComplianceDashboard studies={studies} saeClocks={saeClocks} refreshData={loadData} />
+        <ComplianceDashboard
+          studies={studies}
+          saeClocks={saeClocks}
+          allAes={allAes}
+          deviations={deviations}
+          refreshData={loadData}
+        />
       )}
       {user?.role === 'ROLE_LEADERSHIP' && (
         <LeadershipDashboard studies={studies} />

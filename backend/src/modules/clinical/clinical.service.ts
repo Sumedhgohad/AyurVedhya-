@@ -150,4 +150,12 @@ export class ClinicalService {
 
     return await this.deviationRepo.save(deviation);
   }
+
+  async getDeviationsByStudy(studyId: string): Promise<ProtocolDeviation[]> {
+    return await this.deviationRepo.find({
+      where: { study_id: studyId },
+      relations: ['participant'],
+      order: { created_at: 'DESC' },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { InvestigatorDashboard } from '../components/InvestigatorDashboard';
@@ -15,7 +15,8 @@ export const DashboardPage: React.FC = () => {
   const [allAes,       setAllAes]       = useState<any[]>([]);
   const [deviations,   setDeviations]   = useState<any[]>([]);
 
-  const loadData = async () => {
+  // Single fetch, no polling interval — Leadership dashboard has its own refresh button
+  const loadData = useCallback(async () => {
     try {
       const [sRes, saeRes] = await Promise.all([
         api.get('/study/list'),
@@ -26,7 +27,6 @@ export const DashboardPage: React.FC = () => {
 
       const activeStudy = sRes.data[0];
       if (activeStudy?.id) {
-        // Fetch supporting data for compliance dashboard — degrade gracefully
         const [pRes, aeRes, devRes] = await Promise.allSettled([
           api.get(`/clinical/participants/study/${activeStudy.id}`),
           api.get(`/safety/ae/study/${activeStudy.id}`),
@@ -37,13 +37,9 @@ export const DashboardPage: React.FC = () => {
         setDeviations(devRes.status === 'fulfilled' && Array.isArray(devRes.value.data) ? devRes.value.data : []);
       }
     } catch (err) { console.error(err); }
-  };
-
-  useEffect(() => {
-    loadData();
-    const t = setInterval(loadData, 10000);
-    return () => clearInterval(t);
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -75,7 +71,11 @@ export const DashboardPage: React.FC = () => {
         />
       )}
       {user?.role === 'ROLE_LEADERSHIP' && (
-        <LeadershipDashboard studies={studies} />
+        <LeadershipDashboard
+          studies={studies}
+          saeClocks={saeClocks}
+          refreshData={loadData}
+        />
       )}
     </div>
   );

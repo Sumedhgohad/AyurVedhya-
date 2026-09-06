@@ -81,6 +81,10 @@ export const StudiesPage: React.FC = () => {
   const [terminationReason, setTerminationReason] = useState('');
   const [closeoutLoading, setCloseoutLoading] = useState(false);
 
+  // DOCUMENT UPLOAD STATE
+  const [protocolFile, setProtocolFile] = useState<File | null>(null);
+  const [coaFile, setCoaFile] = useState<File | null>(null);
+
   const loadStudies = async () => {
     try {
       const res = await api.get('/study/list');
@@ -183,6 +187,18 @@ export const StudiesPage: React.FC = () => {
       setShowCreateModal(false);
       setTitle('');
       setShortCode('');
+      // Upload protocol document if attached
+      if (protocolFile && res.data.id) {
+        try {
+          const fd = new FormData();
+          fd.append('file', protocolFile);
+          fd.append('study_id', res.data.id);
+          fd.append('document_type', 'PROTOCOL_VERSION');
+          fd.append('uploaded_by', user?.email ?? 'investigator@aiia.gov.in');
+          await api.post('/documents/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch { /* non-fatal — study already created */ }
+        setProtocolFile(null);
+      }
       await loadStudies();
       setSelectedStudy(res.data);
     } catch (err: any) {
@@ -250,6 +266,18 @@ export const StudiesPage: React.FC = () => {
       setShowBatchModal(false);
       setFormulation('');
       setBatchNo('');
+      // Upload CoA if attached
+      if (coaFile && selectedStudy.id) {
+        try {
+          const fd = new FormData();
+          fd.append('file', coaFile);
+          fd.append('study_id', selectedStudy.id);
+          fd.append('document_type', 'DRUG_CERTIFICATE_OF_ANALYSIS');
+          fd.append('uploaded_by', user?.email ?? 'investigator@aiia.gov.in');
+          await api.post('/documents/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch { /* non-fatal */ }
+        setCoaFile(null);
+      }
       await loadStudies();
     } catch (err: any) {
       setNotification(`❌ Error: ${err.response?.data?.message || err.message}`);
@@ -1089,6 +1117,27 @@ export const StudiesPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Protocol document upload — optional at creation time */}
+                <div>
+                  <label style={labelOverline()}>Attach Signed Protocol Document (PDF) — Optional</label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={e => setProtocolFile(e.target.files?.[0] ?? null)}
+                    style={{
+                      width: '100%', boxSizing: 'border-box' as const,
+                      background: PARCHMENT, border: `1px solid ${HAIRLINE}`,
+                      borderRadius: R_MD, padding: '8px 12px',
+                      fontSize: 13, color: INK_80, cursor: 'pointer',
+                    }}
+                  />
+                  {protocolFile && (
+                    <p style={{ fontSize: 11, color: SUCCESS, margin: '4px 0 0' }}>
+                      Ready to upload: {protocolFile.name}
+                    </p>
+                  )}
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
                   <button type="button" onClick={() => setShowCreateModal(false)} style={btnSecondary()}>
                     Cancel
@@ -1455,11 +1504,31 @@ export const StudiesPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* CoA / Batch Certificate upload */}
+              <div>
+                <label style={labelOverline()}>Attach Certificate of Analysis (CoA / PDF) — Optional</label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={e => setCoaFile(e.target.files?.[0] ?? null)}
+                  style={{
+                    width: '100%', boxSizing: 'border-box' as const,
+                    background: PARCHMENT, border: `1px solid ${HAIRLINE}`,
+                    borderRadius: R_MD, padding: '8px 12px',
+                    fontSize: 13, color: INK_80, cursor: 'pointer',
+                  }}
+                />
+                {coaFile && (
+                  <p style={{ fontSize: 11, color: SUCCESS, margin: '4px 0 0' }}>
+                    Ready to upload: {coaFile.name}
+                  </p>
+                )}
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
                 <button type="button" onClick={() => setShowBatchModal(false)} style={btnSecondary()}>
                   Cancel
-                </button>
-                <button type="submit" disabled={loading} style={btnPrimary(loading)}>
+                </button>                <button type="submit" disabled={loading} style={btnPrimary(loading)}>
                   Log Batch Stock
                 </button>
               </div>

@@ -146,6 +146,25 @@ const IecCard: React.FC<{
               <textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={3}
                 style={{ ...inputField(), resize: 'vertical' as const }} required />
             </div>
+            <div>
+              <label style={labelOverline()}>Attach IEC Clearance Letter (PDF) — Optional</label>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={e => setIecFile(e.target.files?.[0] ?? null)}
+                style={{
+                  width: '100%', boxSizing: 'border-box' as const,
+                  background: PARCHMENT, border: `1px solid ${HAIRLINE}`,
+                  borderRadius: R_MD, padding: '8px 12px',
+                  fontSize: 13, color: INK_80, cursor: 'pointer',
+                }}
+              />
+              {iecFile && (
+                <p style={{ fontSize: 11, color: SUCCESS, margin: '4px 0 0' }}>
+                  Ready to upload: {iecFile.name}
+                </p>
+              )}
+            </div>
             <button type="submit" disabled={loading} style={btnPrimary(loading)}>
               <ClipboardCheck size={14} />
               Record Statutory IEC Decision
@@ -464,6 +483,7 @@ export const EthicsCtriPage: React.FC = () => {
   const [decisionDate, setDecisionDate] = useState(new Date().toISOString().split('T')[0]);
   const [validUntil,   setValidUntil]   = useState('2027-09-15');
   const [remarks,      setRemarks]      = useState('Ethics clearance approved unanimously under ICMR 2017 Guidelines.');
+  const [iecFile,      setIecFile]      = useState<File | null>(null);
 
   // CTRI FORM STATE
   const [ctriId,  setCtriId]  = useState('');
@@ -510,6 +530,18 @@ export const EthicsCtriPage: React.FC = () => {
         remarks,
       });
       setNotification(`Statutory Ethics Decision ('${iecDecision}') recorded into the immutable audit log.`);
+      // Upload IEC clearance letter if attached
+      if (iecFile && selectedId) {
+        try {
+          const fd = new FormData();
+          fd.append('file', iecFile);
+          fd.append('study_id', selectedId);
+          fd.append('document_type', 'IEC_APPROVAL_LETTER');
+          fd.append('uploaded_by', user?.email ?? 'compliance@aiia.gov.in');
+          await api.post('/documents/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch { /* non-fatal */ }
+        setIecFile(null);
+      }
       await loadStudies();
     } catch (err: any) {
       setNotification(`Error: ${err.response?.data?.message || err.message}`);

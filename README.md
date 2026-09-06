@@ -1,4 +1,3 @@
 # AyurVedhya-
 
-
-<img width="3716" height="1860" alt="image" src="https://github.com/user-attachments/assets/9bad4935-07c9-476b-b868-ad060a6f8f09" />
+<img width="3716" height="1864" alt="image" src="https://github.com/user-attachments/assets/eae5ca95-86c5-4323-b80d-bbad0a1074d0" />

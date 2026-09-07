@@ -66,7 +66,7 @@ export const PrakritiQuestionnaireModal: React.FC<Props> = ({ isOpen, onClose, o
           {QUESTIONS.map((q) => (
             <div key={q.id} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
               <span className="font-semibold text-slate-200 block">{q.label}</span>
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
                 <button
                   type="button"
                   onClick={() => setAnswers({ ...answers, [q.id]: 'v' })}

@@ -575,7 +575,7 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies, saeClocks, refre
       {/* ══════════════════════════════════════════════════════════
           SECTION 1 — 4 INSTITUTIONAL KPI CARDS
           ══════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         {/* KPI 1 — Portfolio Scale */}
         <KpiCard
@@ -812,7 +812,7 @@ export const LeadershipDashboard: React.FC<Props> = ({ studies, saeClocks, refre
       {/* ══════════════════════════════════════════════════════════
           SECTION 3 — DUAL OPERATIONAL PANELS (dark slate-900)
           ══════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* LEFT — Grant Funding & Financial Governance */}
         <div style={{

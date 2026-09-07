@@ -1,0 +1,187 @@
+File Tree: AyurVedhya-
+Generated on: 9/7/2026, 10:37:07 PM
+Root path: c:\Users\admin\Downloads\Ayurvedhya\AyurVedhya-
+
+────────────────────────────────────────────────────────────────────────────────
+
+├── 📁 SIH/
+│   ├── 📁 components/
+│   │   ├── 📁 ui/
+│   │   │   ├── 📄 SpecularButton.tsx
+│   │   │   └── 📄 StarBorder.tsx
+│   │   ├── 📄 AyurvedaRigor.tsx
+│   │   ├── 🎨 BorderGlow.css
+│   │   ├── 📄 BorderGlow.jsx
+│   │   ├── 📄 CTA.tsx
+│   │   ├── 📄 Footer.tsx
+│   │   ├── 🎨 GlowCursor.css
+│   │   ├── 📄 GlowCursor.jsx
+│   │   ├── 📄 Header.tsx
+│   │   ├── 📄 Hero.tsx
+│   │   ├── 📄 Lifecycle.tsx
+│   │   ├── 🎨 LogoLoop.css
+│   │   ├── 📄 LogoLoop.jsx
+│   │   ├── 🎨 MagicBento.css
+│   │   ├── 📄 PlatformModules.tsx
+│   │   ├── 📄 ProblemSolution.tsx
+│   │   ├── 📄 ShapeBlur.jsx
+│   │   ├── 🎨 SoftAurora.css
+│   │   └── 📄 SoftAurora.jsx
+│   ├── 📁 lib/
+│   │   └── 📄 utils.ts
+│   ├── 📁 public/
+│   │   └── 📁 Logo/
+│   │       └── 🖼️ Final_Logo.png
+│   ├── ⚙️ .gitignore
+│   ├── 📄 LandingPage.tsx
+│   ├── 📝 README.md
+│   ├── ⚙️ components.json
+│   ├── 🌐 index.html
+│   ├── 🎨 landingpage.css
+│   ├── 📄 main.tsx
+│   ├── ⚙️ package-lock.json
+│   ├── ⚙️ package.json
+│   ├── ⚙️ tsconfig.json
+│   ├── 📄 vite-env.d.ts
+│   └── 📄 vite.config.ts
+├── 📁 backend/
+│   ├── 📁 src/
+│   │   ├── 📁 config/
+│   │   │   └── 📄 database.config.ts
+│   │   ├── 📁 decorators/
+│   │   │   └── 📄 roles.decorator.ts
+│   │   ├── 📁 guards/
+│   │   │   ├── 📄 jwt-auth.guard.ts
+│   │   │   ├── 📄 roles.decorator.ts
+│   │   │   └── 📄 roles.guard.ts
+│   │   ├── 📁 modules/
+│   │   │   ├── 📁 ai-analytics/
+│   │   │   │   ├── 📄 ai.controller.ts
+│   │   │   │   ├── 📄 ai.module.ts
+│   │   │   │   └── 📄 ai.service.ts
+│   │   │   ├── 📁 alerts/
+│   │   │   │   ├── 📁 entities/
+│   │   │   │   │   └── 📄 system-alert.entity.ts
+│   │   │   │   ├── 📄 alerts.controller.ts
+│   │   │   │   ├── 📄 alerts.module.ts
+│   │   │   │   └── 📄 alerts.service.ts
+│   │   │   ├── 📁 audit/
+│   │   │   │   ├── 📁 dto/
+│   │   │   │   │   └── 📄 audit.dto.ts
+│   │   │   │   ├── 📁 entities/
+│   │   │   │   │   └── 📄 audit-event.entity.ts
+│   │   │   │   ├── 📄 audit.controller.ts
+│   │   │   │   ├── 📄 audit.module.ts
+│   │   │   │   └── 📄 audit.service.ts
+│   │   │   ├── 📁 clinical/
+│   │   │   │   ├── 📁 dto/
+│   │   │   │   │   └── 📄 clinical.dto.ts
+│   │   │   │   ├── 📁 entities/
+│   │   │   │   │   ├── 📄 data-query.entity.ts
+│   │   │   │   │   ├── 📄 index.ts
+│   │   │   │   │   ├── 📄 participant-consent.entity.ts
+│   │   │   │   │   ├── 📄 participant.entity.ts
+│   │   │   │   │   ├── 📄 protocol-deviation.entity.ts
+│   │   │   │   │   └── 📄 visit.entity.ts
+│   │   │   │   ├── 📄 clinical.controller.ts
+│   │   │   │   ├── 📄 clinical.module.ts
+│   │   │   │   └── 📄 clinical.service.ts
+│   │   │   ├── 📁 documents/
+│   │   │   │   ├── 📁 entities/
+│   │   │   │   │   └── 📄 document-receipt.entity.ts
+│   │   │   │   ├── 📄 documents.controller.ts
+│   │   │   │   ├── 📄 documents.module.ts
+│   │   │   │   └── 📄 documents.service.ts
+│   │   │   ├── 📁 interop/
+│   │   │   │   ├── 📄 interop.controller.ts
+│   │   │   │   ├── 📄 interop.module.ts
+│   │   │   │   └── 📄 interop.service.ts
+│   │   │   ├── 📁 redis/
+│   │   │   │   ├── 📄 redis-consumer.service.ts
+│   │   │   │   ├── 📄 redis.module.ts
+│   │   │   │   └── 📄 redis.service.ts
+│   │   │   ├── 📁 safety/
+│   │   │   │   ├── 📁 dto/
+│   │   │   │   │   └── 📄 safety.dto.ts
+│   │   │   │   ├── 📁 entities/
+│   │   │   │   │   └── 📄 adverse-event.entity.ts
+│   │   │   │   ├── 📄 safety.controller.ts
+│   │   │   │   ├── 📄 safety.gateway.ts
+│   │   │   │   ├── 📄 safety.module.ts
+│   │   │   │   └── 📄 safety.service.ts
+│   │   │   └── 📁 study/
+│   │   │       ├── 📁 dto/
+│   │   │       │   └── 📄 study.dto.ts
+│   │   │       ├── 📁 entities/
+│   │   │       │   ├── 📄 ctri-registration.entity.ts
+│   │   │       │   ├── 📄 iec-submission.entity.ts
+│   │   │       │   ├── 📄 index.ts
+│   │   │       │   ├── 📄 study-arm.entity.ts
+│   │   │       │   ├── 📄 study-ip-batch.entity.ts
+│   │   │       │   ├── 📄 study.entity.ts
+│   │   │       │   └── 📄 visit-definition.entity.ts
+│   │   │       ├── 📄 study.controller.ts
+│   │   │       ├── 📄 study.module.ts
+│   │   │       └── 📄 study.service.ts
+│   │   ├── 📄 app.module.ts
+│   │   └── 📄 main.ts
+│   ├── ⚙️ .gitignore
+│   ├── ⚙️ nest-cli.json
+│   ├── ⚙️ package-lock.json
+│   ├── ⚙️ package.json
+│   └── ⚙️ tsconfig.json
+├── 📁 docker/
+│   ├── 📁 keycloak/
+│   │   └── ⚙️ realm-export.json
+│   └── 📁 postgres/
+│       └── 📄 init-database.sql
+├── 📁 frontend/
+│   ├── 📁 src/
+│   │   ├── 📁 api/
+│   │   │   └── 📄 client.ts
+│   │   ├── 📁 components/
+│   │   │   ├── 📁 layout/
+│   │   │   │   ├── 📄 AppLayout.tsx
+│   │   │   │   ├── 📄 Sidebar.tsx
+│   │   │   │   └── 📄 TopNav.tsx
+│   │   │   ├── 📄 ComplianceDashboard.tsx
+│   │   │   ├── 📄 Header.tsx
+│   │   │   ├── 📄 InvestigatorDashboard.tsx
+│   │   │   ├── 📄 LeadershipDashboard.tsx
+│   │   │   ├── 📄 PrakritiQuestionnaireModal.tsx
+│   │   │   └── 📄 SignaturePad.tsx
+│   │   ├── 📁 context/
+│   │   │   └── 📄 AuthContext.tsx
+│   │   ├── 📁 pages/
+│   │   │   ├── 📄 AuditTrailPage.tsx
+│   │   │   ├── 📄 DashboardPage.tsx
+│   │   │   ├── 📄 DocumentVaultPage.tsx
+│   │   │   ├── 📄 EthicsCtriPage.tsx
+│   │   │   ├── 📄 InteroperabilityPage.tsx
+│   │   │   ├── 📄 LandingPage.tsx
+│   │   │   ├── 📄 LoginPage.tsx
+│   │   │   ├── 📄 ParticipantsPage.tsx
+│   │   │   ├── 📄 SafetyPage.tsx
+│   │   │   └── 📄 StudiesPage.tsx
+│   │   ├── 📁 types/
+│   │   │   └── 📄 index.ts
+│   │   ├── 📄 App.tsx
+│   │   ├── 📄 design.ts
+│   │   ├── 🎨 index.css
+│   │   └── 📄 main.tsx
+│   ├── 🌐 index.html
+│   ├── ⚙️ package-lock.json
+│   ├── ⚙️ package.json
+│   ├── 📄 postcss.config.js
+│   ├── 📄 tailwind.config.js
+│   ├── ⚙️ tsconfig.json
+│   └── 📄 vite.config.ts
+├── 📁 gateway/
+│   └── ⚙️ nginx.conf
+├── ⚙️ .gitignore
+├── 📝 README.md
+├── ⚙️ docker-compose.yml
+└── 📝 verge.md
+
+────────────────────────────────────────────────────────────────────────────────
+Generated by FileTree Pro Extension

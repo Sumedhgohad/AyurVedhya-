@@ -1,108 +1,149 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Activity, LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { FONT_STACK, PRIMARY, PRIMARY_ON_DARK, SURFACE_BLACK, INK_48 } from '../../design';
 
-export const TopNav: React.FC = () => {
+interface TopNavProps {
+  onToggleMobile?: () => void;
+}
+
+export const TopNav: React.FC<TopNavProps> = ({ onToggleMobile }) => {
   const { user, logout } = useAuth();
 
   return (
     <header style={{
-      height: 44,
-      background: SURFACE_BLACK,
-      borderBottom: '1px solid rgba(255,255,255,0.10)',
+      height: 64,
+      background: '#0c1f16',
+      borderBottom: '1px solid rgba(255,255,255,0.12)',
       position: 'sticky', top: 0, zIndex: 100,
       backdropFilter: 'saturate(180%) blur(20px)',
       WebkitBackdropFilter: 'saturate(180%) blur(20px)',
       display: 'flex', alignItems: 'center',
       justifyContent: 'space-between',
-      paddingLeft: 24, paddingRight: 24,
+      paddingLeft: 20, paddingRight: 24,
       fontFamily: FONT_STACK,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
     }}>
 
-      {/* ── Brand ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 22, height: 22, borderRadius: '50%',
-          background: PRIMARY,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <Activity size={11} color="#fff" strokeWidth={2.5} />
+      {/* ── Brand & Mobile Hamburger ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {onToggleMobile && (
+          <button
+            onClick={onToggleMobile}
+            title="Toggle Navigation Menu"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 8,
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+              color: '#ffffff', cursor: 'pointer',
+            }}
+            className="md:hidden"
+          >
+            <Menu size={19} />
+          </button>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img
+            src="/Logo/Final_Logo.png"
+            alt="AyurVedhya Logo"
+            style={{ width: 36, height: 36, objectFit: 'contain' }}
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                AyurVedhya
+              </span>
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: '#52B788',
+                background: 'rgba(82,183,136,0.15)',
+                border: '1px solid rgba(82,183,136,0.35)',
+                padding: '2px 7px', borderRadius: 4,
+                letterSpacing: '0.04em', lineHeight: 1.1,
+              }}>
+                CTMS
+              </span>
+            </div>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: 2 }}>
+              All India Institute of Ayurveda
+            </span>
+          </div>
+
+          <div style={{ width: 1, height: 26, background: 'rgba(255,255,255,0.12)', margin: '0 4px' }} className="hidden sm:block" />
+
+          <div style={{
+            display: 'none', alignItems: 'center', gap: 8,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            padding: '4px 12px', borderRadius: 9999,
+          }} className="sm:inline-flex">
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52B788' }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#e5e7eb', letterSpacing: '0.03em' }}>
+              Ministry of Ayush · ICMR &amp; GCP Validated
+            </span>
+          </div>
         </div>
-
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#ffffff', letterSpacing: '-0.12px', lineHeight: 1 }}>
-          AyurVedhya CTMS
-        </span>
-
-        {/* pill badge — Action Blue tint per verge.md */}
-        <span style={{
-          fontSize: 10, fontWeight: 600, color: PRIMARY_ON_DARK,
-          background: 'rgba(0,102,204,0.14)',
-          border: '1px solid rgba(0,102,204,0.28)',
-          padding: '2px 9px', borderRadius: 9999,
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-          lineHeight: 1.5,
-        }}>
-          AIIA · Ministry of Ayush
-        </span>
       </div>
 
-      {/* ── Right cluster ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* ── Right Cluster ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
         {/* User identity pill */}
         {user && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            padding: '4px 12px 4px 4px', borderRadius: 9999,
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            padding: '5px 14px 5px 6px', borderRadius: 9999,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
           }}>
             <div style={{
-              width: 26, height: 26, borderRadius: '50%',
-              background: PRIMARY,
+              width: 30, height: 30, borderRadius: '50%',
+              background: '#1b6e4e',
+              border: '1px solid rgba(255,255,255,0.20)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 600, color: '#ffffff', flexShrink: 0,
+              fontSize: 12, fontWeight: 700, color: '#ffffff', flexShrink: 0,
             }}>
               {user.avatarLetter}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', letterSpacing: '-0.12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', letterSpacing: '-0.12px' }}>
                 {user.fullName}
               </span>
-              <span style={{ fontSize: 10, fontWeight: 400, color: PRIMARY_ON_DARK, letterSpacing: '-0.08px', marginTop: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: '#52B788', letterSpacing: '-0.08px', marginTop: 2 }}>
                 {user.roleDisplayName}
               </span>
             </div>
           </div>
         )}
 
-        {/* Logout button — 32×32 circular utility */}
+        {/* Logout button — 36×36 circular utility */}
         <button
           onClick={logout}
           title="Sign Out"
           style={{
-            width: 32, height: 32, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.10)',
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.14)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: INK_48,
-            transition: 'all 0.12s ease', flexShrink: 0,
+            cursor: 'pointer', color: '#9ca3af',
+            transition: 'all 0.15s ease', flexShrink: 0,
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,69,58,0.14)';
-            e.currentTarget.style.borderColor = 'rgba(255,69,58,0.35)';
-            e.currentTarget.style.color = '#ff453a';
+            e.currentTarget.style.background = 'rgba(255,69,58,0.18)';
+            e.currentTarget.style.borderColor = 'rgba(255,69,58,0.40)';
+            e.currentTarget.style.color = '#ff6b6b';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
-            e.currentTarget.style.color = INK_48;
+            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
+            e.currentTarget.style.color = '#9ca3af';
           }}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.95)')}
           onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <LogOut size={13} />
+          <LogOut size={15} />
         </button>
       </div>
     </header>

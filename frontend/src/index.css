@@ -20,30 +20,26 @@ html {
 
 body {
   margin: 0;
-  /* SF Pro stack → Inter fallback per verge.md §Note on Font Substitutes */
-  font-family: 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  /* verge.md: body copy at 17px NOT 16px — defines the brand's reading pace */
-  font-size: 17px;
+  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
   font-weight: 400;
-  line-height: 1.47;
-  /* Inter needs -0.01em nudge at display sizes; -0.374px at body per spec */
-  letter-spacing: -0.374px;
-  /* Light theme: parchment canvas */
-  background-color: #f5f5f7;
-  color: #1d1d1f;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  background-color: #f8faf9;
+  color: #14221a;
 }
 
 /* ── Selection ── */
-::selection { background: #0066cc; color: #ffffff; }
+::selection { background: #1b6e4e; color: #ffffff; }
 
 /* ── Focus ring ── */
-:focus-visible { outline: 2px solid #0071e3; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #2d8a64; outline-offset: 2px; }
 
-/* ── Scrollbar — parchment-light ── */
+/* ── Scrollbar — clean clinical ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f5f5f7; }
-::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #0066cc; }
+::-webkit-scrollbar-track { background: #f8faf9; }
+::-webkit-scrollbar-thumb { background: #d3ded7; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #1b6e4e; }
 
 /* ════════════════════════════════
    TYPOGRAPHY — exact verge.md scale

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "../api/client";
 import { Study } from "../types";
+import { DEFAULT_AIIA_STUDIES, DEFAULT_DOCUMENTS } from "../types/defaultStudies";
 import {
   ShieldCheck,
   FileText,
@@ -333,17 +334,9 @@ const DocumentPreviewModal: React.FC<PreviewModalProps> = ({
         </div>
 
         {/* ── BODY: preview + sidebar ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 300px",
-            flex: 1,
-            overflow: "hidden",
-            minHeight: 0,
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-12 flex-1 overflow-hidden min-h-0">
           {/* Preview area */}
-          <div
+          <div className="md:col-span-8 min-h-[280px] sm:min-h-[360px]"
             style={{
               background: "#1a1a1c",
               display: "flex",
@@ -390,11 +383,9 @@ const DocumentPreviewModal: React.FC<PreviewModalProps> = ({
 
           {/* Metadata & verification sidebar */}
           <div
+            className="md:col-span-4 border-t md:border-t-0 md:border-l flex flex-col overflow-y-auto"
             style={{
-              borderLeft: `1px solid ${HAIRLINE}`,
-              display: "flex",
-              flexDirection: "column",
-              overflowY: "auto",
+              borderColor: HAIRLINE,
             }}
           >
             {/* Privacy notice for consent docs */}
@@ -1024,9 +1015,9 @@ const DocCard: React.FC<DocCardProps> = ({
    PAGE
 ───────────────────────────────────────────────────────────────────*/
 export const DocumentVaultPage: React.FC = () => {
-  const [studies, setStudies] = useState<Study[]>([]);
-  const [selectedId, setSelectedId] = useState<string>("");
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [studies, setStudies] = useState<Study[]>(DEFAULT_AIIA_STUDIES);
+  const [selectedId, setSelectedId] = useState<string>(DEFAULT_AIIA_STUDIES[0]?.id || "");
+  const [documents, setDocuments] = useState<any[]>(DEFAULT_DOCUMENTS);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [verifyMap, setVerifyMap] = useState<
     Record<string, { loading: boolean; result: any | null }>
@@ -1037,8 +1028,10 @@ export const DocumentVaultPage: React.FC = () => {
     api
       .get("/study/list")
       .then((r) => {
-        setStudies(r.data);
-        if (r.data.length > 0) setSelectedId(r.data[0].id);
+        if (Array.isArray(r.data) && r.data.length > 0) {
+          setStudies(r.data);
+          setSelectedId(r.data[0].id);
+        }
       })
       .catch(console.error);
   }, []);
@@ -1049,9 +1042,19 @@ export const DocumentVaultPage: React.FC = () => {
     setVerifyMap({});
     try {
       const res = await api.get(`/documents/study/${studyId}`);
-      setDocuments(Array.isArray(res.data) ? res.data : []);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setDocuments(res.data);
+      } else if (studyId === DEFAULT_AIIA_STUDIES[0]?.id) {
+        setDocuments(DEFAULT_DOCUMENTS);
+      } else {
+        setDocuments([]);
+      }
     } catch {
-      setDocuments([]);
+      if (studyId === DEFAULT_AIIA_STUDIES[0]?.id) {
+        setDocuments(DEFAULT_DOCUMENTS);
+      } else {
+        setDocuments([]);
+      }
     } finally {
       setLoadingDocs(false);
     }
@@ -1356,13 +1359,7 @@ export const DocumentVaultPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: 18,
-          }}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
           {documents.map((doc) => (
             <DocCard
               key={doc.id}

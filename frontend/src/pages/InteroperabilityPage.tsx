@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { Study } from '../types';
+import { DEFAULT_AIIA_STUDIES, DEFAULT_CDISC_PACKAGE } from '../types/defaultStudies';
 import {
   Download, Database, ChevronDown, CheckCircle2,
   Link2, FileJson, TableProperties, ShieldCheck,
@@ -196,10 +197,28 @@ const SdtmTable: React.FC<{
    MAIN PAGE
 ───────────────────────────────────────────────────────────────────*/
 export const InteroperabilityPage: React.FC = () => {
-  const [studies,      setStudies]      = useState<Study[]>([]);
-  const [selectedId,   setSelectedId]   = useState<string>('');
-  const [cdiscData,    setCdiscData]    = useState<CdiscData | null>(null);
-  const [fhirData,     setFhirData]     = useState<any>(null);
+  const [studies,      setStudies]      = useState<Study[]>(DEFAULT_AIIA_STUDIES);
+  const [selectedId,   setSelectedId]   = useState<string>(DEFAULT_AIIA_STUDIES[0]?.id || '');
+  const [cdiscData,    setCdiscData]    = useState<CdiscData | null>(DEFAULT_CDISC_PACKAGE as any);
+  const [fhirData,     setFhirData]     = useState<any>({
+    resourceType: 'Bundle',
+    type: 'collection',
+    id: 'aiia-fhir-bundle-001',
+    meta: { lastUpdated: new Date().toISOString() },
+    entry: [
+      {
+        fullUrl: 'urn:uuid:aiia-study-001',
+        resource: {
+          resourceType: 'ResearchStudy',
+          id: 'aiia-study-001',
+          title: 'Evaluation of Ashwagandha Ghan Vati in Mild-to-Moderate Generalized Anxiety Disorder',
+          status: 'active',
+          sponsor: { display: 'All India Institute of Ayurveda (AIIA)' },
+          period: { start: '2026-01-15', end: '2027-06-30' },
+        },
+      },
+    ],
+  });
   const [activeTab,    setActiveTab]    = useState<DomainKey>('DM');
   const [loadingCdisc, setLoadingCdisc] = useState(false);
   const [loadingFhir,  setLoadingFhir]  = useState(false);
@@ -211,8 +230,10 @@ export const InteroperabilityPage: React.FC = () => {
   /* ── Initial study load ── */
   useEffect(() => {
     api.get('/study/list').then(res => {
-      setStudies(res.data);
-      if (res.data.length > 0) setSelectedId(res.data[0].id);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setStudies(res.data);
+        setSelectedId(res.data[0].id);
+      }
     }).catch(console.error);
   }, []);
 
@@ -224,13 +245,31 @@ export const InteroperabilityPage: React.FC = () => {
     setFhirValidated(false);
 
     api.get(`/interop/cdisc/sdtm/${studyId}`)
-      .then(r => setCdiscData(r.data))
-      .catch(() => setCdiscData(null))
+      .then(r => {
+        if (r.data && r.data.domains) {
+          setCdiscData(r.data);
+        } else if (studyId === DEFAULT_AIIA_STUDIES[0]?.id) {
+          setCdiscData(DEFAULT_CDISC_PACKAGE as any);
+        } else {
+          setCdiscData(null);
+        }
+      })
+      .catch(() => {
+        if (studyId === DEFAULT_AIIA_STUDIES[0]?.id) {
+          setCdiscData(DEFAULT_CDISC_PACKAGE as any);
+        } else {
+          setCdiscData(null);
+        }
+      })
       .finally(() => setLoadingCdisc(false));
 
     api.get(`/interop/fhir/bundle/${studyId}`)
-      .then(r => setFhirData(r.data))
-      .catch(() => setFhirData(null))
+      .then(r => {
+        if (r.data && r.data.resourceType) {
+          setFhirData(r.data);
+        }
+      })
+      .catch(() => {})
       .finally(() => setLoadingFhir(false));
   }, []);
 
@@ -307,11 +346,11 @@ export const InteroperabilityPage: React.FC = () => {
         </div>
 
         {/* Protocol Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <div className="flex items-center gap-2.5 flex-wrap max-w-full">
           <span style={{ fontSize: 11, fontWeight: 600, color: INK_48, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
             Active Protocol
           </span>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', maxWidth: '100%' }}>
             <select
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
@@ -323,7 +362,7 @@ export const InteroperabilityPage: React.FC = () => {
                 padding: '8px 36px 8px 14px',
                 fontSize: 13, fontWeight: 600, color: INK,
                 fontFamily: FONT_STACK, cursor: 'pointer',
-                outline: 'none', minWidth: 280,
+                outline: 'none', width: 280, maxWidth: '100%',
                 letterSpacing: '-0.12px',
               }}
             >
@@ -502,10 +541,7 @@ export const InteroperabilityPage: React.FC = () => {
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 2 — ABDM / HL7 FHIR GATEWAY STATUS CARD
           ══════════════════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20,
-        alignItems: 'start',
-      }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
         {/* ── Left: Integration Status ── */}
         <div style={{

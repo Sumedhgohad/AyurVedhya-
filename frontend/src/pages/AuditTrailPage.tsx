@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { Search, ArrowRight } from 'lucide-react';
 import { CANVAS, PARCHMENT, HAIRLINE, INK, INK_48, INK_80, PRIMARY, PRIMARY_FOCUS, SUCCESS, DANGER, PURPLE, FONT_MONO, R_MD, R_LG, R_PILL, TYPE, BADGE } from '../design';
+import { DEFAULT_AUDIT_LOGS } from '../types/defaultStudies';
 
 /**
  * Render a JSON delta object as a compact vertical list of key: value pairs
@@ -36,11 +37,19 @@ const DeltaCell: React.FC<{ label: string; values: Record<string, any> | null; c
 };
 
 export const AuditTrailPage: React.FC = () => {
-  const [logs, setLogs]       = useState<any[]>([]);
+  const [logs, setLogs]       = useState<any[]>(DEFAULT_AUDIT_LOGS);
   const [filter, setFilter]   = useState('');
   const [focus, setFocus]     = useState(false);
 
-  useEffect(() => { api.get('/audit/all').then(r=>setLogs(r.data)).catch(console.error); }, []);
+  useEffect(() => {
+    api.get('/audit/all')
+      .then(r => {
+        if (Array.isArray(r.data) && r.data.length > 0) {
+          setLogs(r.data);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const filtered = logs.filter(l =>
     l.entity_type.toLowerCase().includes(filter.toLowerCase()) ||
@@ -60,11 +69,11 @@ export const AuditTrailPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Pill search input per verge.md */}
-        <div style={{ position:'relative', flexShrink:0 }}>
+        {/* Pill search input */}
+        <div className="w-full sm:w-72" style={{ position:'relative', flexShrink:0 }}>
           <Search size={12} color={INK_48} style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}/>
           <input type="text" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search by entity, user, or reason…"
-            style={{ background: CANVAS, border:`1px solid ${focus ? PRIMARY_FOCUS : HAIRLINE}`, borderRadius: R_PILL, padding:'10px 16px 10px 36px', fontSize:14, color: INK, letterSpacing:'-0.224px', outline:'none', width:280, fontFamily:'inherit', transition:'border-color 0.15s' }}
+            style={{ background: CANVAS, border:`1px solid ${focus ? PRIMARY_FOCUS : HAIRLINE}`, borderRadius: R_PILL, padding:'10px 16px 10px 36px', fontSize:14, color: INK, letterSpacing:'-0.224px', outline:'none', width:'100%', boxSizing:'border-box', fontFamily:'inherit', transition:'border-color 0.15s' }}
             onFocus={()=>setFocus(true)} onBlur={()=>setFocus(false)}
           />
         </div>
@@ -73,7 +82,7 @@ export const AuditTrailPage: React.FC = () => {
       {/* Table — canvas card */}
       <div style={{ background: CANVAS, border:`1px solid ${HAIRLINE}`, borderRadius: R_LG, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13, letterSpacing:'-0.12px', tableLayout:'fixed' }}>
+          <table style={{ width:'100%', minWidth:880, borderCollapse:'collapse', fontSize:13, letterSpacing:'-0.12px', tableLayout:'fixed' }}>
             {/* Fixed column widths: prevents any single cell from blowing up the layout */}
             <colgroup>
               <col style={{ width:'148px' }} />  {/* Timestamp */}

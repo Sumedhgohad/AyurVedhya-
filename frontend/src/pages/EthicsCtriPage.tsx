@@ -62,12 +62,14 @@ const IecCard: React.FC<{
   decisionDate: string; setDecisionDate: (v: string) => void;
   validUntil: string; setValidUntil: (v: string) => void;
   remarks: string; setRemarks: (v: string) => void;
+  iecFile: File | null; setIecFile: (f: File | null) => void;
 }> = ({
   study, isOfficer, loading, onDecision,
   iecDecision, setIecDecision,
   decisionDate, setDecisionDate,
   validUntil, setValidUntil,
   remarks, setRemarks,
+  iecFile, setIecFile,
 }) => {
   const approvedIec = study.iec_submissions?.find(s => s.decision === 'APPROVED');
   const anyIec      = study.iec_submissions?.[0];

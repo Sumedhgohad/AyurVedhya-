@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { DashboardPage } from './pages/DashboardPage';
@@ -23,18 +24,18 @@ export const App: React.FC = () => {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
 
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <AppLayout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route index element={<DashboardPage />} />
             <Route path="studies" element={<StudiesPage />} />
             <Route path="participants" element={<ParticipantsPage />} />
             <Route path="safety" element={<SafetyPage />} />
@@ -44,7 +45,7 @@ export const App: React.FC = () => {
             <Route path="interoperability" element={<InteroperabilityPage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

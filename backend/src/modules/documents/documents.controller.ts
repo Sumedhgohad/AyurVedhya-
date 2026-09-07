@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Param, UploadedFile, UseInterceptors, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Res, UploadedFile, UseInterceptors, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { DocumentsService } from './documents.service';
 
 @Controller('documents')
@@ -28,6 +29,16 @@ export class DocumentsController {
   @Get('study/:studyId')
   getDocumentsByStudy(@Param('studyId') studyId: string) {
     return this.docService.getDocumentsByStudy(studyId);
+  }
+
+  // Secure inline streaming — serves the file from MinIO with Content-Disposition: inline
+  // The @Res() decorator gives raw Express response access so we can pipe the stream directly
+  @Get('preview/:id')
+  async previewDocument(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    await this.docService.streamDocumentForPreview(id, res);
   }
 
   @Get('verify/:id')

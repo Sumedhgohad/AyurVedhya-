@@ -218,6 +218,45 @@ export class DocumentsService implements OnModuleInit {
     });
   }
 
+  // Secure inline streaming: serves the raw file from MinIO with inline Content-Disposition
+  async streamDocumentForPreview(
+    receiptId: string,
+    res: any, // Express Response
+  ): Promise<void> {
+    const receipt = await this.receiptRepo.findOne({ where: { id: receiptId } });
+    if (!receipt) throw new NotFoundException('Document receipt not found.');
+
+    // Derive MIME type from file extension
+    const ext = receipt.file_name.split('.').pop()?.toLowerCase() ?? '';
+    const mimeMap: Record<string, string> = {
+      pdf:  'application/pdf',
+      png:  'image/png',
+      jpg:  'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif:  'image/gif',
+      webp: 'image/webp',
+    };
+    const contentType = mimeMap[ext] ?? 'application/octet-stream';
+
+    // Fetch from MinIO
+    const dataStream = await this.minioClient.getObject(
+      this.bucketName,
+      receipt.minio_object_path,
+    );
+
+    // Set response headers for inline browser rendering
+    res.setHeader('Content-Type', contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${receipt.file_name}"`,
+    );
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader('X-SHA256-Fingerprint', receipt.sha256_hash);
+
+    // Pipe MinIO stream directly into Express response
+    dataStream.pipe(res);
+  }
+
   // Tamper-Proof Verification: Re-downloads file from MinIO, re-hashes, and compares
   async verifyDocumentIntegrity(receiptId: string): Promise<any> {
     const receipt = await this.receiptRepo.findOne({

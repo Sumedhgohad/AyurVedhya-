@@ -15,11 +15,17 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('SECURITY ALERT: Missing or invalid Authorization Bearer token.');
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (request.query && request.query.token) {
+      token = request.query.token as string;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('SECURITY ALERT: Missing or invalid Authorization Bearer token.');
+    }
     let decoded: any = {};
 
     try {

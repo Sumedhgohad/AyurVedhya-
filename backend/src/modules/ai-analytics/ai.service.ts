@@ -45,6 +45,25 @@ export interface PharmacovigilanceSignal {
   nlp_clustered_terms: string[];
 }
 
+export interface DelayAndRiskPrediction {
+  study_id: string;
+  overall_risk_level: 'HIGH' | 'MEDIUM' | 'LOW';
+  aggregated_metrics: {
+    total_participants: number;
+    high_risk_count: number;
+    total_delayed_visits: number;
+    total_missed_visits: number;
+    average_delay_days: number;
+  };
+  participant_risks: Array<{
+    participant_code: string;
+    risk_score: number;
+    risk_level: 'HIGH' | 'MEDIUM' | 'LOW';
+    reasons: string[];
+    recommendation: string;
+  }>;
+}
+
 @Injectable()
 export class AiService {
   constructor(
@@ -276,5 +295,113 @@ export class AiService {
     }
 
     return signals;
+  }
+
+  // =========================================================================
+  // JOB D: DELAY AND RISK PREDICTION RULE ENGINE
+  // =========================================================================
+  async calculateStudyDelaysAndRisks(studyId: string): Promise<DelayAndRiskPrediction> {
+    const study = await this.studyService.getStudyById(studyId);
+    if (!study) throw new NotFoundException('Study not found.');
+
+    const participants = await this.clinicalService.getParticipantsByStudy(studyId);
+    
+    let totalDelayed = 0;
+    let totalMissed = 0;
+    let sumDelayDays = 0;
+    let highRiskCount = 0;
+
+    const participantRisks = participants.map(p => {
+      let riskScore = 0;
+      const reasons: string[] = [];
+
+      // Example base assumption: we expect a visit every 14 days from enrollment.
+      const enrollmentDate = p.enrollment_date ? new Date(p.enrollment_date) : new Date();
+      const now = new Date();
+      const elapsedDays = Math.floor((now.getTime() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const expectedVisitsCount = Math.floor(elapsedDays / 14);
+      const actualVisitsCount = p.visits?.length || 0;
+
+      if (actualVisitsCount < expectedVisitsCount) {
+        const missed = expectedVisitsCount - actualVisitsCount;
+        totalMissed += missed;
+        riskScore += missed * 20;
+        reasons.push(`${missed} expected visits missed based on enrollment date.`);
+      }
+
+      // Check protocol deviations
+      if (p.deviations && p.deviations.length > 0) {
+        riskScore += p.deviations.length * 15;
+        reasons.push(`${p.deviations.length} protocol deviations recorded.`);
+      }
+
+      // Check visit delays and diet scores
+      if (p.visits && p.visits.length > 0) {
+        let lowestDietScore = 100;
+        p.visits.forEach(v => {
+           if (v.pathya_apathya_diet_score < lowestDietScore) {
+              lowestDietScore = v.pathya_apathya_diet_score;
+           }
+           // Simple delay heuristic: if visit_date is way off from created_at
+           const vDate = new Date(v.visit_date);
+           const cDate = new Date(v.created_at);
+           const diffDays = Math.floor((cDate.getTime() - vDate.getTime()) / (1000 * 60 * 60 * 24));
+           if (diffDays > 3) {
+             totalDelayed++;
+             sumDelayDays += diffDays;
+             riskScore += 10;
+             if (!reasons.includes('Data entry delayed for visits.')) {
+               reasons.push('Data entry delayed for visits.');
+             }
+           }
+        });
+        if (lowestDietScore < 80) {
+           riskScore += 10;
+           reasons.push(`Low diet adherence score recorded (${lowestDietScore}%).`);
+        }
+      }
+
+      // Determine Risk Level
+      let riskLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+      let recommendation = 'Monitor routinely.';
+      if (riskScore >= 40) {
+        riskLevel = 'HIGH';
+        highRiskCount++;
+        recommendation = 'Immediate investigator intervention required. Schedule a follow-up call to prevent dropout.';
+      } else if (riskScore >= 20) {
+        riskLevel = 'MEDIUM';
+        recommendation = 'Send SMS reminder and review diet adherence.';
+      }
+
+      return {
+        participant_code: p.participant_code,
+        risk_score: riskScore,
+        risk_level: riskLevel,
+        reasons,
+        recommendation
+      };
+    });
+
+    const averageDelay = totalDelayed > 0 ? Math.round(sumDelayDays / totalDelayed) : 0;
+    
+    // Determine overall study risk
+    const highRiskRatio = participants.length > 0 ? highRiskCount / participants.length : 0;
+    let overallRisk: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+    if (highRiskRatio > 0.2 || averageDelay > 7) overallRisk = 'HIGH';
+    else if (highRiskRatio > 0.1 || averageDelay > 3) overallRisk = 'MEDIUM';
+
+    return {
+      study_id: studyId,
+      overall_risk_level: overallRisk,
+      aggregated_metrics: {
+        total_participants: participants.length,
+        high_risk_count: highRiskCount,
+        total_delayed_visits: totalDelayed,
+        total_missed_visits: totalMissed,
+        average_delay_days: averageDelay
+      },
+      participant_risks: participantRisks
+    };
   }
 }

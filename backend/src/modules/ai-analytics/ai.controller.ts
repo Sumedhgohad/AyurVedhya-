@@ -9,4 +9,9 @@ export class AiController {
   getHealthScore(@Param('studyId') studyId: string) {
     return this.aiService.calculateTrialHealthScore(studyId);
   }
+
+  @Get('delays-and-risks/:studyId')
+  getDelaysAndRisks(@Param('studyId') studyId: string) {
+    return this.aiService.calculateStudyDelaysAndRisks(studyId);
+  }
 }

@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { InvestigatorDashboard } from '../components/InvestigatorDashboard';
 import { ComplianceDashboard } from '../components/ComplianceDashboard';
 import { LeadershipDashboard } from '../components/LeadershipDashboard';
+import { AiRiskWidget } from '../components/AiRiskWidget';
 import { Study, SaeClock } from '../types';
 import { DEFAULT_AIIA_STUDIES } from '../types/defaultStudies';
 import { INK, INK_48, PRIMARY, TYPE } from '../design';
@@ -93,6 +94,8 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <AiRiskWidget studies={studies} />
 
       {user?.role === 'ROLE_INVESTIGATOR' && (
         <InvestigatorDashboard

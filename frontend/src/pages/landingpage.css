@@ -1,0 +1,340 @@
+@import "tw-animate-css";
+
+:root {
+  --color-forest: #173B2A;
+  --color-deep-green: #24523A;
+  --color-herbal: #3F6B45;
+  --color-leaf: #6F8F5F;
+  --color-sage: #A8B89A;
+  --color-parchment: #F5EBD7;
+  --color-cream: #FBF7ED;
+  --color-sand: #E6D3B1;
+  --color-earth: #76583E;
+  --color-brown: #4A3828;
+  --color-saffron: #B8792E;
+  --color-ochre: #C6954C;
+  --color-white: #FFFDF8;
+  --color-black: #172018;
+
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 3.75rem;
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 2px 8px rgba(23, 59, 42, 0.06);
+  --shadow-md: 0 6px 20px rgba(23, 59, 42, 0.09);
+  --shadow-lg: 0 12px 32px rgba(23, 59, 42, 0.12);
+}
+
+#ayurvedhya-landing-page {
+    /* Scoped base styles */
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    background-color: var(--color-cream);
+    color: var(--color-black);
+    font-family: var(--font-body);
+}
+
+#ayurvedhya-landing-page main > :first-child {
+    margin-top: 0 !important;
+}
+
+#ayurvedhya-landing-page main > :last-child {
+    margin-bottom: 0 !important;
+}
+
+#ayurvedhya-landing-page ::-webkit-scrollbar {
+    display: none;
+}
+
+/* Material Symbols Ligature & Display Support */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
+/* Dynamic Living Botanical Atmosphere */
+@keyframes botanical-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -1.5%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(-1.5%, 1%, 0) scale(1);
+  }
+}
+
+.botanical-atmosphere {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(63, 107, 69, 0.08), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 70%, rgba(184, 121, 46, 0.06), transparent 70%),
+    radial-gradient(ellipse 40% 60% at 60% 20%, rgba(111, 143, 95, 0.07), transparent 70%);
+  animation: botanical-drift 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.botanical-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 10 C45 25 55 35 70 40 C55 45 45 55 40 70 C35 55 25 45 10 40 C25 35 35 25 40 10 Z' fill='%23173B2A' fill-opacity='0.025'/%3E%3Cpath d='M40 25 C42 32 48 38 55 40 C48 42 42 48 40 55 C38 42 32 42 25 40 C32 38 38 32 40 25 Z' fill='%23B8792E' fill-opacity='0.02'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
+.manuscript-parchment {
+  background-color: var(--color-cream);
+  background-image: 
+    radial-gradient(at 10% 15%, rgba(245, 235, 215, 0.9) 0px, transparent 60%),
+    radial-gradient(at 90% 85%, rgba(230, 211, 177, 0.5) 0px, transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botanical-atmosphere {
+    animation: none !important;
+  }
+}
+
+/* ReactBits-style Micro-interactions & Glow Borders */
+#ayurvedhya-landing-page .reactbits-card {
+    position: relative;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    isolation: isolate;
+}
+
+#ayurvedhya-landing-page .reactbits-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px -8px rgba(10, 25, 47, 0.09), 0 0 0 1px rgba(5, 150, 105, 0.25);
+}
+
+#ayurvedhya-landing-page .reactbits-glow-border {
+    position: relative;
+    border: 1px solid rgba(197, 198, 205, 0.5);
+    transition: border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+#ayurvedhya-landing-page .reactbits-glow-border:hover {
+    border-color: rgba(5, 150, 105, 0.5);
+    box-shadow: 0 14px 30px -6px rgba(5, 150, 105, 0.12);
+    transform: translateY(-2px);
+}
+
+/* 3D tilt perspective container */
+#ayurvedhya-landing-page .tilt-container {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+}
+
+#ayurvedhya-landing-page .tilt-inner {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+
+/* Stream Connector Line */
+@keyframes streamFlow {
+    0% {
+        stroke-dashoffset: 24;
+    }
+
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+#ayurvedhya-landing-page .stream-connector {
+    stroke-dasharray: 6 6;
+    animation: streamFlow 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #ayurvedhya-landing-page .reactbits-card,
+    #ayurvedhya-landing-page .reactbits-glow-border,
+    #ayurvedhya-landing-page .tilt-inner {
+        transform: none !important;
+        transition: none !important;
+    }
+
+    #ayurvedhya-landing-page .stream-connector {
+        animation: none !important;
+    }
+}
+
+@keyframes star-border-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes specular-shine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes aurora {
+    from {
+        background-position: 50% 50%, 50% 50%;
+    }
+    to {
+        background-position: 350% 50%, 350% 50%;
+    }
+}
+
+:root {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}

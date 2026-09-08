@@ -26,6 +26,11 @@ export class SafetyController {
     return this.safetyService.generateNpvccReport(id);
   }
 
+  @Get('export/npvcc/study/:studyId')
+  generateStudyNpvccPackage(@Param('studyId') studyId: string) {
+    return this.safetyService.generateStudyNpvccPackage(studyId);
+  }
+
   @Patch('sae/:id/mark-reported')
   markSaeAsReported(@Param('id') id: string) {
     return this.safetyService.markSaeAsReported(id);

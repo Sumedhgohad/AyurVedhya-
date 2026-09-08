@@ -439,7 +439,7 @@ export const InvestigatorDashboard: React.FC<Props> = ({
       {/* ══════════════════════════════════════════════════════════════════════
           KPI ROW — 4 cards
           ══════════════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         {/* 1. Recruitment */}
         <KPI
@@ -559,10 +559,10 @@ export const InvestigatorDashboard: React.FC<Props> = ({
       {/* ══════════════════════════════════════════════════════════════════════
           OPERATIONAL PANELS — Protocol Summary + Actionable Visit Timeline
           ══════════════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
         {/* ─── Panel A: Active Protocol Summary ─── */}
-        <div style={{
+        <div className="lg:col-span-5" style={{
           background: CANVAS, border: `1px solid ${HAIRLINE}`,
           borderRadius: R_LG, padding: 28,
           display: 'flex', flexDirection: 'column', gap: 20,
@@ -682,7 +682,7 @@ export const InvestigatorDashboard: React.FC<Props> = ({
         </div>
 
         {/* ─── Panel B: Actionable Visit Timeline ─── */}
-        <div style={{
+        <div className="lg:col-span-7" style={{
           background: CANVAS, border: `1px solid ${HAIRLINE}`,
           borderRadius: R_LG, overflow: 'hidden',
           display: 'flex', flexDirection: 'column',

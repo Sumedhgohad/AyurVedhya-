@@ -132,7 +132,7 @@ export const ComplianceDashboard: React.FC<Props> = ({
       {/* ══════════════════════════════════════════════════════════════
           4-CARD STATUTORY KPI ROW
           ══════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         {/* KPI 1 — IEC Dossier Backlog */}
         <div style={{
@@ -475,7 +475,7 @@ export const ComplianceDashboard: React.FC<Props> = ({
 
         <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Summary stat row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             {[
               { label: 'Total AEFA Reactions', val: allAes.length, color: INK },
               { label: 'Serious (SAE)', val: allAes.filter(a => a.is_serious).length, color: DANGER },

@@ -25,24 +25,34 @@ export const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage initialMode="login" />} />
+          <Route path="/signup" element={<LoginPage initialMode="signup" />} />
 
+          {/* Authenticated Application Shell */}
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute>
                 <AppLayout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<DashboardPage />} />
-            <Route path="studies" element={<StudiesPage />} />
-            <Route path="participants" element={<ParticipantsPage />} />
-            <Route path="safety" element={<SafetyPage />} />
-            <Route path="ethics-ctri" element={<EthicsCtriPage />} />
-            <Route path="documents" element={<DocumentVaultPage />} />
-            <Route path="audit-trail" element={<AuditTrailPage />} />
-            <Route path="interoperability" element={<InteroperabilityPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/studies" element={<StudiesPage />} />
+            <Route path="/participants" element={<ParticipantsPage />} />
+            <Route path="/safety" element={<SafetyPage />} />
+            <Route path="/ethics-ctri" element={<EthicsCtriPage />} />
+            <Route path="/documents" element={<DocumentVaultPage />} />
+            <Route path="/audit-trail" element={<AuditTrailPage />} />
+            <Route path="/interoperability" element={<InteroperabilityPage />} />
+
+            {/* Subpaths for compatibility if accessed via /dashboard/* */}
+            <Route path="/dashboard/studies" element={<Navigate to="/studies" replace />} />
+            <Route path="/dashboard/participants" element={<Navigate to="/participants" replace />} />
+            <Route path="/dashboard/safety" element={<Navigate to="/safety" replace />} />
+            <Route path="/dashboard/ethics-ctri" element={<Navigate to="/ethics-ctri" replace />} />
+            <Route path="/dashboard/documents" element={<Navigate to="/documents" replace />} />
+            <Route path="/dashboard/audit-trail" element={<Navigate to="/audit-trail" replace />} />
+            <Route path="/dashboard/interoperability" element={<Navigate to="/interoperability" replace />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

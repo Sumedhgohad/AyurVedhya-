@@ -4,12 +4,14 @@ import { api } from '../api/client';
 import { InvestigatorDashboard } from '../components/InvestigatorDashboard';
 import { ComplianceDashboard } from '../components/ComplianceDashboard';
 import { LeadershipDashboard } from '../components/LeadershipDashboard';
+import { AiRiskWidget } from '../components/AiRiskWidget';
 import { Study, SaeClock } from '../types';
+import { DEFAULT_AIIA_STUDIES } from '../types/defaultStudies';
 import { INK, INK_48, PRIMARY, TYPE } from '../design';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [studies,      setStudies]      = useState<Study[]>([]);
+  const [studies,      setStudies]      = useState<Study[]>(DEFAULT_AIIA_STUDIES);
   const [saeClocks,    setSaeClocks]    = useState<SaeClock[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [allAes,       setAllAes]       = useState<any[]>([]);
@@ -22,10 +24,10 @@ export const DashboardPage: React.FC = () => {
         api.get('/study/list'),
         api.get('/safety/sae/active-clocks'),
       ]);
-      setStudies(sRes.data);
-      setSaeClocks(saeRes.data);
+      if (Array.isArray(sRes.data) && sRes.data.length > 0) setStudies(sRes.data);
+      if (Array.isArray(saeRes.data) && saeRes.data.length > 0) setSaeClocks(saeRes.data);
 
-      const activeStudy = sRes.data[0];
+      const activeStudy = (Array.isArray(sRes.data) && sRes.data[0]) || DEFAULT_AIIA_STUDIES[0];
       if (activeStudy?.id) {
         const [pRes, aeRes, devRes] = await Promise.allSettled([
           api.get(`/clinical/participants/study/${activeStudy.id}`),
@@ -42,16 +44,58 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => { loadData(); }, [loadData]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <div>
-        <h1 style={{ ...TYPE.displayMd, color: INK, margin: '0 0 6px', fontFamily: "'SF Pro Display','Inter',system-ui,sans-serif" }}>
-          Welcome, {user?.fullName}
-        </h1>
-        <p style={{ ...TYPE.caption, color: INK_48, margin: 0 }}>
-          Active Role Persona:{' '}
-          <strong style={{ color: PRIMARY, fontWeight: 600 }}>{user?.roleDisplayName}</strong>
-        </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8e4',
+        borderRadius: 16,
+        padding: '24px 28px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03), 0 4px 14px rgba(23,59,42,0.02)',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: PRIMARY,
+              background: 'rgba(27,110,78,0.10)',
+              border: '1px solid rgba(27,110,78,0.22)',
+              padding: '2px 10px', borderRadius: 9999,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}>
+              AIIA Clinical Operations
+            </span>
+            <span style={{ fontSize: 12, color: INK_48 }}>· GCP &amp; NDCT 2019 Active</span>
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: INK, margin: '0 0 4px', letterSpacing: '-0.02em' }}>
+            Welcome, {user?.fullName}
+          </h1>
+          <p style={{ fontSize: 13, color: INK_48, margin: 0 }}>
+            Unified research management, trial oversight, and safety reporting workspace.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: '#f8faf9', border: '1px solid #e2e8e4',
+          borderRadius: 12, padding: '10px 16px',
+        }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#15803d', display: 'inline-block' }} />
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: INK_48, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Current Persona
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: PRIMARY }}>
+              {user?.roleDisplayName}
+            </div>
+          </div>
+        </div>
       </div>
+
+      <AiRiskWidget studies={studies} />
 
       {user?.role === 'ROLE_INVESTIGATOR' && (
         <InvestigatorDashboard

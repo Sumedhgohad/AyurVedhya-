@@ -63,6 +63,19 @@ export default {
         success: '#34c759',
         warning: '#ff9f0a',
         danger: '#ff453a',
+
+        // Landing Page Colors
+        forest: '#173B2A',
+        'deep-green': '#24523A',
+        herbal: '#3F6B45',
+        leaf: '#6F8F5F',
+        sage: '#A8B89A',
+        cream: '#FBF7ED',
+        sand: '#E6D3B1',
+        earth: '#76583E',
+        brown: '#4A3828',
+        saffron: '#B8792E',
+        ochre: '#C6954C',
       },
       borderRadius: {
         none: '0px',
